@@ -29,8 +29,8 @@ public class Country
         return capitalCityName;
     }
 
-    public String[] getFacts()
+    public String getFacts(final int index)
     {
-        return facts;
+        return facts[index];
     }
 }

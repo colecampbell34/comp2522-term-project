@@ -58,7 +58,7 @@ public class Main
      */
     private static void playWordGame() throws FileNotFoundException
     {
-        System.out.println("Starting the Word game...\n(Placeholder functionality)");
+        System.out.println("Starting the Word game...");
         WordGame.play();
     }
 
