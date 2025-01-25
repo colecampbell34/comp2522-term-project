@@ -2,6 +2,8 @@ package ca.bcit.comp2522.termproject.wordgame;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 import java.util.Scanner;
 
@@ -16,17 +18,14 @@ public class WordGame
 
     public static void play()
     {
-        Scanner  fileScanner;
-        char     fileName;
-        String   name;
-        String   capitalCityName;
-        String[] facts;
+        Scanner fileScanner;
+        char fileName;
+        String name;
+        String capitalCityName;
         String[] splitter;
-        Country  country;
+        Country country;
 
         fileName = 'a';
-        facts = new String[3];
-        splitter = new String[2];
 
         // Read all files into the Hash Map
         while (fileName <= 'z')
@@ -48,9 +47,11 @@ public class WordGame
 
                     splitter = fileScanner.nextLine().split(":");
 
-                    name            = splitter[0].trim();
+                    name = splitter[0].trim();
                     capitalCityName = splitter[1].trim();
 
+                    String[] facts;
+                    facts = new String[3];
                     for (int i = 0; i < 3; i++)
                     {
                         facts[i] = fileScanner.nextLine();
@@ -76,39 +77,47 @@ public class WordGame
 
     private static void playRound()
     {
-        final Random random;
+        final Random random = new Random();
         int guesses;
+        List<String> keys = new ArrayList<>(World.worldMap.keySet()); // Get all keys from the map
 
-        random = new Random();
-        int randomNum;
+        for (int i = 0; i < 10; i++)
+        {
+            if (keys.isEmpty()) {
+                System.out.println("No countries available to play.");
+                return;
+            }
 
-         for (int i = 0; i < 10; i++)
-         {
-             randomNum = random.nextInt(3);
+            // Select a random key from the list of keys
+            String randomKey = keys.get(random.nextInt(keys.size()));
 
-             // PASS RANDOM COUNTRY KEY STRING TO METHODS BELOW
+            // Select a random question type
+            int randomNum = random.nextInt(3);
 
-             guesses = switch (randomNum)
-             {
-                 case 0 -> giveCapital("United States");
-                 case 1 -> giveCountry("United States");
-                 case 2 -> giveFact("United States");
-                 default -> 2;
-             };
-             System.out.println("Round complete");
-             // round complete, deal with int guesses and add it to the score thing
+            guesses = switch (randomNum)
+            {
+                case 0 -> giveCapital(randomKey);
+                case 1 -> giveCountry(randomKey);
+                case 2 -> giveFact(randomKey);
+                default -> 2;
+            };
 
-         }
+            System.out.println("Round complete\n");
+            // Handle guesses and update score here if needed
+
+
+        }
+
+        // REPORT SCORE IN FORMAT, THEN ASK IF THEY WANT TO PLAY AGAIN
+
+        // LATER WE NEED TO APPEND THE SCORE RESULTS TO A FILE CALLED SCORE.TXT
     }
 
     private static int giveCapital(final String key)
     {
-        final Scanner input;
-        int guesses;
+        final Scanner input = new Scanner(System.in);
+        int guesses = 0;
         String guess;
-
-        input = new Scanner(System.in);
-        guesses = 0;
 
         while (guesses < 2)
         {
@@ -126,17 +135,16 @@ public class WordGame
             guesses++;
         }
         System.out.println("Sorry, you didn't get it.");
+        System.out.println("The correct answer was " +
+                           World.worldMap.get(key).getName());
         return guesses;
     }
 
     private static int giveCountry(final String key)
     {
-        final Scanner input;
-        int guesses;
+        final Scanner input = new Scanner(System.in);
+        int guesses = 0;
         String guess;
-
-        input = new Scanner(System.in);
-        guesses = 0;
 
         while (guesses < 2)
         {
@@ -154,21 +162,18 @@ public class WordGame
             guesses++;
         }
         System.out.println("Sorry, you didn't get it.");
+        System.out.println("The correct answer was " +
+                           World.worldMap.get(key).getCapitalCityName());
         return guesses;
     }
 
     private static int giveFact(final String key)
     {
-        final Random random;
-        final Scanner input;
-        int guesses;
+        final Random random = new Random();
+        final Scanner input = new Scanner(System.in);
+        int guesses = 0;
         String guess;
-        final int randomFactIndex;
-
-        random = new Random();
-        input = new Scanner(System.in);
-        guesses = 0;
-        randomFactIndex = random.nextInt(3);
+        final int randomFactIndex = random.nextInt(3);
 
         while (guesses < 2)
         {
@@ -186,6 +191,8 @@ public class WordGame
             guesses++;
         }
         System.out.println("Sorry, you didn't get it.");
+        System.out.println("The correct answer was " +
+                           World.worldMap.get(key).getName());
         return guesses;
     }
 }
