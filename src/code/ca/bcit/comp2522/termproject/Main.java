@@ -2,6 +2,7 @@ package ca.bcit.comp2522.termproject;
 
 import ca.bcit.comp2522.termproject.wordgame.WordGame;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.Scanner;
 
 /**
@@ -12,7 +13,7 @@ import java.util.Scanner;
  */
 public class Main
 {
-    public static void main(final String[] args) throws FileNotFoundException
+    public static void main(final String[] args) throws IOException
     {
         Scanner input = new Scanner(System.in);
 
@@ -56,7 +57,7 @@ public class Main
     /**
      * Simulates playing the Word game.
      */
-    private static void playWordGame() throws FileNotFoundException
+    private static void playWordGame() throws IOException
     {
         System.out.println("Starting the Word game...");
         WordGame.play();

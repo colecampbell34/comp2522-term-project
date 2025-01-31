@@ -2,6 +2,10 @@ package ca.bcit.comp2522.termproject.wordgame;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -15,29 +19,50 @@ import java.util.Scanner;
  */
 public class WordGame
 {
+    private static final int NOTHING              = 0;
+    private static final int GUESSES_PER_ROUND    = 10;
+    private static final int RANDOM_SELECTOR      = 3;
+    private static final int GIVE_CAPITAL         = 0;
+    private static final int GIVE_COUNTRY         = 1;
+    private static final int GIVE_FACT            = 2;
+    private static final int FIRST_TRY            = 0;
+    private static final int SECOND_TRY           = 1;
+    private static final int THIRD_TRY            = 2;
+    private static final int CHAR_OFFSET          = 2;
+    private static final int FIRST_HALF           = 0;
+    private static final int SECOND_HALF          = 1;
+    private static final int FACTS_PER_COUNTRY    = 3;
+    private static final int FIRST_TRY_MULTIPLIER = 2;
 
-    public static void play()
+    private static int roundsPlayed;
+    private static int firstTry;
+    private static int secondTry;
+    private static int wrong;
+
+    public static void play() throws IOException
     {
-        Scanner fileScanner;
-        char fileName;
-        String name;
-        String capitalCityName;
+        Scanner  fileScanner;
+        char     fileName;
+        String   name;
+        String   capitalCityName;
         String[] splitter;
-        Country country;
+        Country  country;
 
-        fileName = 'a';
+        fileName     = 'a';
+        roundsPlayed = NOTHING;
 
         // Read all files into the Hash Map
         while (fileName <= 'z')
         {
             if (fileName == 'w')
             {
-                fileName += 2;
+                fileName += CHAR_OFFSET;
             }
 
             try
             {
-                File file = new File("/Users/colecampbell/IntelliJProjects/comp2522-term-project/src/resources/" + fileName + ".txt");
+                File file = new File("/Users/colecampbell/IntelliJProjects" +
+                                     "/comp2522-term-project/src/resources/" + fileName + ".txt");
 
                 fileScanner = new Scanner(file);
 
@@ -47,12 +72,12 @@ public class WordGame
 
                     splitter = fileScanner.nextLine().split(":");
 
-                    name = splitter[0].trim();
-                    capitalCityName = splitter[1].trim();
+                    name            = splitter[FIRST_HALF].trim();
+                    capitalCityName = splitter[SECOND_HALF].trim();
 
                     String[] facts;
-                    facts = new String[3];
-                    for (int i = 0; i < 3; i++)
+                    facts = new String[FACTS_PER_COUNTRY];
+                    for (int i = 0; i < FACTS_PER_COUNTRY; i++)
                     {
                         facts[i] = fileScanner.nextLine();
                     }
@@ -75,51 +100,108 @@ public class WordGame
         playRound();
     }
 
-    private static void playRound()
+    private static void playRound() throws IOException
     {
-        final Random random = new Random();
-        int guesses;
-        List<String> keys = new ArrayList<>(World.worldMap.keySet()); // Get all keys from the map
+        final LocalDateTime     currentTime;
+        final DateTimeFormatter formatter;
+        final String            formattedDateTime;
+        final Scanner           input;
+        final Random            random;
+        final List<String>      keys;
+        String                  userChoice;
+        int                     guesses;
+        int                     points;
 
-        for (int i = 0; i < 10; i++)
+        input     = new Scanner(System.in);
+        random    = new Random();
+        keys      = new ArrayList<>(World.worldMap.keySet()); // Get all keys from the map
+        firstTry  = NOTHING;
+        secondTry = NOTHING;
+        wrong     = NOTHING;
+        points    = NOTHING;
+
+
+        System.out.println("\nNew round\n");
+
+        for (int i = 0; i < GUESSES_PER_ROUND; i++)
         {
-            if (keys.isEmpty()) {
-                System.out.println("No countries available to play.");
-                return;
-            }
-
             // Select a random key from the list of keys
             String randomKey = keys.get(random.nextInt(keys.size()));
 
             // Select a random question type
-            int randomNum = random.nextInt(3);
+            final int randomNum = random.nextInt(RANDOM_SELECTOR);
 
             guesses = switch (randomNum)
             {
-                case 0 -> giveCapital(randomKey);
-                case 1 -> giveCountry(randomKey);
-                case 2 -> giveFact(randomKey);
-                default -> 2;
+                case GIVE_CAPITAL -> giveCapital(randomKey);
+                case GIVE_COUNTRY -> giveCountry(randomKey);
+                case GIVE_FACT -> giveFact(randomKey);
+                default -> throw new IllegalArgumentException("This is impossible.");
             };
 
             System.out.println("Round complete\n");
-            // Handle guesses and update score here if needed
 
+            // Handle guesses
+            if (guesses == FIRST_TRY)
+            {
+                firstTry++;
+            } else if (guesses == SECOND_TRY)
+            {
+                secondTry++;
+            } else
+            {
+                wrong++;
+            }
+        }
+        roundsPlayed++;
+        points += (firstTry * FIRST_TRY_MULTIPLIER +
+                   secondTry);
 
+        printReport();
+
+        System.out.println("\nYes to play again, no to go back to main menu");
+        userChoice = input.next().toUpperCase();
+
+        while (!userChoice.equals("YES") &&
+               !userChoice.equals("NO"))
+        {
+            System.out.println("Invalid choice, please try again");
+            System.out.println("\nYes to play again, no to go back to main menu");
+            userChoice = input.next().toUpperCase();
         }
 
-        // REPORT SCORE IN FORMAT, THEN ASK IF THEY WANT TO PLAY AGAIN
+        if (userChoice.equals("YES"))
+        {
+            playRound();
+        }
 
-        // LATER WE NEED TO APPEND THE SCORE RESULTS TO A FILE CALLED SCORE.TXT
+        currentTime       = LocalDateTime.now();
+        formatter         = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        formattedDateTime = currentTime.format(formatter);
+
+        // Append score data to file
+        try (final FileWriter writer = new FileWriter("score.txt", true))
+        {
+            writer.write("Date and Time: " + formattedDateTime + "\n");
+            writer.write("Games Played: " + roundsPlayed + "\n");
+            writer.write("Correct First Attempts: " + firstTry + "\n");
+            writer.write("Correct Second Attempts: " + secondTry + "\n");
+            writer.write("Incorrect Attempts: " + wrong + "\n");
+            writer.write("Total Score: " + points + "\n\n");
+            System.out.println("Score file updated successfully.");
+        } catch (IOException e)
+        {
+            System.out.println("An error occurred: " + e.getMessage());
+        }
     }
 
     private static int giveCapital(final String key)
     {
-        final Scanner input = new Scanner(System.in);
-        int guesses = 0;
-        String guess;
+        final Scanner input   = new Scanner(System.in);
+        int           guesses = NOTHING;
+        String        guess;
 
-        while (guesses < 2)
+        while (guesses < THIRD_TRY)
         {
             System.out.println("What country has the capital city of " +
                                World.worldMap.get(key).getCapitalCityName() + "?");
@@ -142,11 +224,11 @@ public class WordGame
 
     private static int giveCountry(final String key)
     {
-        final Scanner input = new Scanner(System.in);
-        int guesses = 0;
-        String guess;
+        final Scanner input   = new Scanner(System.in);
+        int           guesses = NOTHING;
+        String        guess;
 
-        while (guesses < 2)
+        while (guesses < THIRD_TRY)
         {
             System.out.println("What is the capital city of " +
                                World.worldMap.get(key).getName() + "?");
@@ -169,13 +251,13 @@ public class WordGame
 
     private static int giveFact(final String key)
     {
-        final Random random = new Random();
-        final Scanner input = new Scanner(System.in);
-        int guesses = 0;
-        String guess;
-        final int randomFactIndex = random.nextInt(3);
+        final Random  random          = new Random();
+        final Scanner input           = new Scanner(System.in);
+        int           guesses         = NOTHING;
+        String        guess;
+        final int     randomFactIndex = random.nextInt(RANDOM_SELECTOR);
 
-        while (guesses < 2)
+        while (guesses < THIRD_TRY)
         {
             System.out.println("What country has this fact: " +
                                World.worldMap.get(key).getFacts(randomFactIndex) + "?");
@@ -194,5 +276,15 @@ public class WordGame
         System.out.println("The correct answer was " +
                            World.worldMap.get(key).getName());
         return guesses;
+    }
+
+    private static void printReport()
+    {
+        System.out.println("========================================");
+        System.out.println(roundsPlayed + " word game(s) played");
+        System.out.println(firstTry + " correct answers on the first attempt");
+        System.out.println(secondTry + " correct answers on the second attempt");
+        System.out.println(wrong + " incorrect answers on two attempts each");
+        System.out.println("========================================");
     }
 }
