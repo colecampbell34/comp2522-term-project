@@ -1,5 +1,8 @@
 package ca.bcit.comp2522.termproject.wordgame;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
 /**
  *
  *
@@ -8,23 +11,43 @@ package ca.bcit.comp2522.termproject.wordgame;
  */
 public class Score
 {
-    private String dateTimePlayed;
+    private static final int NOTHING = 0;
+
+    private final String dateTimePlayed;
     private int numGamesPlayed;
     private int numCorrectFirstAttempt;
     private int numCorrectSecondAttempt;
     private int numIncorrectTwoAttempts;
+    private static double highScore;
+    private static String dateTimeOfHighScore;
 
-    // CHANGE WORD GAME CLASS SO IT UPDATES THE SCORE OBJECT INSTEAD
+    static
+    {
+        highScore = NOTHING;
+        dateTimeOfHighScore = null;
+    }
 
+    public Score()
+    {
+        final LocalDateTime     currentTime;
+        final DateTimeFormatter formatter;
+        final String            formattedDateTime;
+
+        currentTime       = LocalDateTime.now();
+        formatter         = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        formattedDateTime = currentTime.format(formatter);
+
+        dateTimePlayed = formattedDateTime;
+        numGamesPlayed = NOTHING;
+        numCorrectFirstAttempt = NOTHING;
+        numCorrectSecondAttempt = NOTHING;
+        numIncorrectTwoAttempts = NOTHING;
+
+    }
 
     public String getDateTimePlayed()
     {
         return dateTimePlayed;
-    }
-
-    public void setDateTimePlayed(final String dateTimePlayed)
-    {
-        this.dateTimePlayed = dateTimePlayed;
     }
 
     public int getNumGamesPlayed()
@@ -32,9 +55,9 @@ public class Score
         return numGamesPlayed;
     }
 
-    public void setNumGamesPlayed(final int numGamesPlayed)
+    public void addNumGamesPlayed()
     {
-        this.numGamesPlayed = numGamesPlayed;
+        this.numGamesPlayed ++;
     }
 
     public int getNumCorrectFirstAttempt()
@@ -42,9 +65,9 @@ public class Score
         return numCorrectFirstAttempt;
     }
 
-    public void setNumCorrectFirstAttempt(final int numCorrectFirstAttempt)
+    public void addNumCorrectFirstAttempt()
     {
-        this.numCorrectFirstAttempt = numCorrectFirstAttempt;
+        this.numCorrectFirstAttempt ++;
     }
 
     public int getNumCorrectSecondAttempt()
@@ -52,9 +75,9 @@ public class Score
         return numCorrectSecondAttempt;
     }
 
-    public void setNumCorrectSecondAttempt(final int numCorrectSecondAttempt)
+    public void addNumCorrectSecondAttempt()
     {
-        this.numCorrectSecondAttempt = numCorrectSecondAttempt;
+        this.numCorrectSecondAttempt ++;
     }
 
     public int getNumIncorrectTwoAttempts()
@@ -62,8 +85,29 @@ public class Score
         return numIncorrectTwoAttempts;
     }
 
-    public void setNumIncorrectTwoAttempts(final int numIncorrectTwoAttempts)
+    public void addNumIncorrectTwoAttempts()
     {
-        this.numIncorrectTwoAttempts = numIncorrectTwoAttempts;
+        this.numIncorrectTwoAttempts ++;
+    }
+
+    public static double getHighScore()
+    {
+        return highScore;
+    }
+
+    public static void setHighScore(final int points,
+                                    final int gamesPlayed)
+    {
+        Score.highScore = points / (double) gamesPlayed;
+    }
+
+    public static String getDateTimeOfHighScore()
+    {
+        return dateTimeOfHighScore;
+    }
+
+    public static void setDateTimeOfHighScore(final String dateTimeOfHighScore)
+    {
+        Score.dateTimeOfHighScore = dateTimeOfHighScore;
     }
 }

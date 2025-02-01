@@ -1,7 +1,6 @@
 package ca.bcit.comp2522.termproject;
 
 import ca.bcit.comp2522.termproject.wordgame.WordGame;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Scanner;
 
@@ -13,6 +12,8 @@ import java.util.Scanner;
  */
 public class Main
 {
+    private static final int FIRST_CHAR = 0;
+
     public static void main(final String[] args) throws IOException
     {
         Scanner input = new Scanner(System.in);
@@ -26,7 +27,7 @@ public class Main
         {
             printMenu();
 
-            userChoice = input.next().charAt(0);
+            userChoice = input.next().charAt(FIRST_CHAR);
             userChoice = Character.toUpperCase(userChoice);
 
             switch (userChoice)

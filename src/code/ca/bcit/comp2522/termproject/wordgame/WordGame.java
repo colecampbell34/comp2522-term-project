@@ -34,10 +34,7 @@ public class WordGame
     private static final int FACTS_PER_COUNTRY    = 3;
     private static final int FIRST_TRY_MULTIPLIER = 2;
 
-    private static int roundsPlayed;
-    private static int firstTry;
-    private static int secondTry;
-    private static int wrong;
+    private static Score score;
 
     public static void play() throws IOException
     {
@@ -49,7 +46,7 @@ public class WordGame
         Country  country;
 
         fileName     = 'a';
-        roundsPlayed = NOTHING;
+        score = new Score();
 
         // Read all files into the Hash Map
         while (fileName <= 'z')
@@ -102,9 +99,6 @@ public class WordGame
 
     private static void playRound() throws IOException
     {
-        final LocalDateTime     currentTime;
-        final DateTimeFormatter formatter;
-        final String            formattedDateTime;
         final Scanner           input;
         final Random            random;
         final List<String>      keys;
@@ -115,9 +109,6 @@ public class WordGame
         input     = new Scanner(System.in);
         random    = new Random();
         keys      = new ArrayList<>(World.worldMap.keySet()); // Get all keys from the map
-        firstTry  = NOTHING;
-        secondTry = NOTHING;
-        wrong     = NOTHING;
         points    = NOTHING;
 
 
@@ -144,21 +135,21 @@ public class WordGame
             // Handle guesses
             if (guesses == FIRST_TRY)
             {
-                firstTry++;
+                score.addNumCorrectFirstAttempt();
             } else if (guesses == SECOND_TRY)
             {
-                secondTry++;
+                score.addNumCorrectSecondAttempt();
             } else
             {
-                wrong++;
+                score.addNumIncorrectTwoAttempts();
             }
         }
-        roundsPlayed++;
-        points += (firstTry * FIRST_TRY_MULTIPLIER +
-                   secondTry);
 
-        printReport();
+        score.addNumGamesPlayed();
+        points += (score.getNumCorrectFirstAttempt() * FIRST_TRY_MULTIPLIER +
+                   score.getNumCorrectSecondAttempt());
 
+        System.out.println("============Round Over============");
         System.out.println("\nYes to play again, no to go back to main menu");
         userChoice = input.next().toUpperCase();
 
@@ -175,18 +166,29 @@ public class WordGame
             playRound();
         }
 
-        currentTime       = LocalDateTime.now();
-        formatter         = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-        formattedDateTime = currentTime.format(formatter);
+        printReport();
+
+        if (points / (double) score.getNumGamesPlayed() > Score.getHighScore())
+        {
+            System.out.printf("CONGRATULATIONS! " +
+                              "You are the new high score with an average of %.2f points per game\n" +
+                              "The previous record was %.2f points per game on %s.\n",
+                              points / (double) score.getNumGamesPlayed(),
+                              Score.getHighScore(),
+                              Score.getDateTimeOfHighScore());
+
+            Score.setHighScore(points, score.getNumGamesPlayed());
+            Score.setDateTimeOfHighScore(score.getDateTimePlayed());
+                    }
 
         // Append score data to file
         try (final FileWriter writer = new FileWriter("score.txt", true))
         {
-            writer.write("Date and Time: " + formattedDateTime + "\n");
-            writer.write("Games Played: " + roundsPlayed + "\n");
-            writer.write("Correct First Attempts: " + firstTry + "\n");
-            writer.write("Correct Second Attempts: " + secondTry + "\n");
-            writer.write("Incorrect Attempts: " + wrong + "\n");
+            writer.write("Date and Time: " + score.getDateTimePlayed() + "\n");
+            writer.write("Games Played: " + score.getNumGamesPlayed() + "\n");
+            writer.write("Correct First Attempts: " + score.getNumCorrectFirstAttempt() + "\n");
+            writer.write("Correct Second Attempts: " + score.getNumCorrectSecondAttempt() + "\n");
+            writer.write("Incorrect Attempts: " + score.getNumIncorrectTwoAttempts() + "\n");
             writer.write("Total Score: " + points + "\n\n");
             System.out.println("Score file updated successfully.");
         } catch (IOException e)
@@ -281,10 +283,10 @@ public class WordGame
     private static void printReport()
     {
         System.out.println("========================================");
-        System.out.println(roundsPlayed + " word game(s) played");
-        System.out.println(firstTry + " correct answers on the first attempt");
-        System.out.println(secondTry + " correct answers on the second attempt");
-        System.out.println(wrong + " incorrect answers on two attempts each");
+        System.out.println(score.getNumGamesPlayed() + " word game(s) played");
+        System.out.println(score.getNumCorrectFirstAttempt() + " correct answers on the first attempt");
+        System.out.println(score.getNumCorrectSecondAttempt() + " correct answers on the second attempt");
+        System.out.println(score.getNumIncorrectTwoAttempts() + " incorrect answers on two attempts each");
         System.out.println("========================================");
     }
 }
