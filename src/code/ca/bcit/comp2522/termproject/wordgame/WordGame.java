@@ -2,53 +2,64 @@ package ca.bcit.comp2522.termproject.wordgame;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-import java.util.Scanner;
+import java.util.*;
 
 /**
- * Description...
+ * Word Game that tests players on country capitals and facts.
  *
  * @author colecampbell
- * @version 1.0
+ * @version 1.1
  */
 public class WordGame
 {
-    private static final int NOTHING              = 0;
-    private static final int GUESSES_PER_ROUND    = 10;
-    private static final int RANDOM_SELECTOR      = 3;
-    private static final int GIVE_CAPITAL         = 0;
-    private static final int GIVE_COUNTRY         = 1;
-    private static final int GIVE_FACT            = 2;
-    private static final int FIRST_TRY            = 0;
-    private static final int SECOND_TRY           = 1;
-    private static final int THIRD_TRY            = 2;
-    private static final int CHAR_OFFSET          = 2;
-    private static final int FIRST_HALF           = 0;
-    private static final int SECOND_HALF          = 1;
-    private static final int FACTS_PER_COUNTRY    = 3;
-    private static final int FIRST_TRY_MULTIPLIER = 2;
+    private static final int    NOTHING           = 0;
+    private static final int    GUESSES_PER_ROUND = 10;
+    private static final int    RANDOM_SELECTOR   = 3;
+    private static final int    GIVE_CAPITAL      = 0;
+    private static final int    GIVE_COUNTRY      = 1;
+    private static final int    GIVE_FACT         = 2;
+    private static final int    RANDOM_INDEX      = 3;
+    private static final int    CHAR_OFFSET       = 2;
+    private static final int    FIRST_HALF        = 0;
+    private static final int    SECOND_HALF       = 1;
+    private static final int    NUMBER_OF_FACTS   = 3;
+    private static final int    FIRST_TRY         = 0;
+    private static final int    SECOND_TRY        = 1;
+    private static final int    MAX_GUESSES       = 2;
+    private static final String SCORE_FILE        = "score.txt";
 
-    private static Score score;
+    private static int gamesPlayed;
+    private static int correctFirstAttempts;
+    private static int correctSecondAttempts;
+    private static int incorrectAttempts;
 
+    /**
+     * Initializes variables for a new round and commences play.
+     *
+     * @throws IOException  if a I/O error occurs
+     */
     public static void play() throws IOException
     {
-        Scanner  fileScanner;
-        char     fileName;
-        String   name;
-        String   capitalCityName;
-        String[] splitter;
-        Country  country;
+        gamesPlayed           = NOTHING;
+        correctFirstAttempts  = NOTHING;
+        correctSecondAttempts = NOTHING;
+        incorrectAttempts     = NOTHING;
 
-        fileName     = 'a';
-        score = new Score();
+        loadWorldData();
+        playRound();
 
-        // Read all files into the Hash Map
+        System.out.println("\n==========Returning To Main Menu==========");
+    }
+
+    /*
+     * Reads from the country files to populate the World HashMap.
+     */
+    private static void loadWorldData()
+    {
+        char fileName = 'a';
+
         while (fileName <= 'z')
         {
             if (fileName == 'w')
@@ -58,31 +69,26 @@ public class WordGame
 
             try
             {
-                File file = new File("/Users/colecampbell/IntelliJProjects" +
-                                     "/comp2522-term-project/src/resources/" + fileName + ".txt");
-
-                fileScanner = new Scanner(file);
+                File    file        = new File("src/resources/" + fileName + ".txt");
+                Scanner fileScanner = new Scanner(file);
 
                 while (fileScanner.hasNext())
                 {
                     fileScanner.nextLine(); // Skip irrelevant line
+                    String[] splitter = fileScanner.nextLine().split(":");
 
-                    splitter = fileScanner.nextLine().split(":");
+                    String   name            = splitter[FIRST_HALF].trim();
+                    String   capitalCityName = splitter[SECOND_HALF].trim();
+                    String[] facts           = new String[NUMBER_OF_FACTS];
 
-                    name            = splitter[FIRST_HALF].trim();
-                    capitalCityName = splitter[SECOND_HALF].trim();
-
-                    String[] facts;
-                    facts = new String[FACTS_PER_COUNTRY];
-                    for (int i = 0; i < FACTS_PER_COUNTRY; i++)
+                    for (int i = 0; i < NUMBER_OF_FACTS; i++)
                     {
                         facts[i] = fileScanner.nextLine();
                     }
 
-                    country = new Country(name, capitalCityName, facts);
-                    World.worldMap.put(name, country);
+                    World.worldMap.put(name, new Country(name, capitalCityName, facts));
                 }
-
+                fileScanner.close();
             } catch (FileNotFoundException e)
             {
                 System.err.println("Error opening file: " + fileName);
@@ -93,200 +99,204 @@ public class WordGame
 
             fileName++;
         }
-
-        playRound();
     }
 
+    /*
+     * Plays one round of the game, posing the user with ten random questions.
+     */
     private static void playRound() throws IOException
     {
-        final Scanner           input;
-        final Random            random;
-        final List<String>      keys;
-        String                  userChoice;
-        int                     guesses;
-        int                     points;
+        Scanner      input  = new Scanner(System.in);
+        Random       random = new Random();
+        List<String> keys   = new ArrayList<>(World.worldMap.keySet());
 
-        input     = new Scanner(System.in);
-        random    = new Random();
-        keys      = new ArrayList<>(World.worldMap.keySet()); // Get all keys from the map
-        points    = NOTHING;
-
-
-        System.out.println("\nNew round\n");
+        System.out.println("\n=====New Round=====\n");
 
         for (int i = 0; i < GUESSES_PER_ROUND; i++)
         {
-            // Select a random key from the list of keys
             String randomKey = keys.get(random.nextInt(keys.size()));
+            int    randomNum = random.nextInt(RANDOM_SELECTOR);
 
-            // Select a random question type
-            final int randomNum = random.nextInt(RANDOM_SELECTOR);
-
-            guesses = switch (randomNum)
+            int guesses = switch (randomNum)
             {
                 case GIVE_CAPITAL -> giveCapital(randomKey);
                 case GIVE_COUNTRY -> giveCountry(randomKey);
                 case GIVE_FACT -> giveFact(randomKey);
-                default -> throw new IllegalArgumentException("This is impossible.");
+                default -> throw new IllegalArgumentException("Unexpected value: " + randomNum);
             };
 
-            System.out.println("Round complete\n");
+            System.out.println("\n=====Next Question=====\n");
 
-            // Handle guesses
             if (guesses == FIRST_TRY)
             {
-                score.addNumCorrectFirstAttempt();
-            } else if (guesses == SECOND_TRY)
+                correctFirstAttempts++;
+            }
+            else if (guesses == SECOND_TRY)
             {
-                score.addNumCorrectSecondAttempt();
-            } else
+                correctSecondAttempts++;
+            }
+            else
             {
-                score.addNumIncorrectTwoAttempts();
+                incorrectAttempts++;
             }
         }
 
-        score.addNumGamesPlayed();
-        points += (score.getNumCorrectFirstAttempt() * FIRST_TRY_MULTIPLIER +
-                   score.getNumCorrectSecondAttempt());
+        gamesPlayed++;
 
-        System.out.println("============Round Over============");
-        System.out.println("\nYes to play again, no to go back to main menu");
-        userChoice = input.next().toUpperCase();
+        System.out.println("============ Round Over ============");
+        System.out.println("\nYes to play again, No to go back to the main menu");
 
-        while (!userChoice.equals("YES") &&
-               !userChoice.equals("NO"))
+        String userChoice = input.next().toUpperCase();
+        while (!userChoice.equals("YES") && !userChoice.equals("NO"))
         {
             System.out.println("Invalid choice, please try again");
-            System.out.println("\nYes to play again, no to go back to main menu");
             userChoice = input.next().toUpperCase();
         }
 
         if (userChoice.equals("YES"))
         {
+            // Play another round
             playRound();
         }
-
-        printReport();
-
-        if (points / (double) score.getNumGamesPlayed() > Score.getHighScore())
+        else
         {
-            System.out.printf("CONGRATULATIONS! " +
-                              "You are the new high score with an average of %.2f points per game\n" +
-                              "The previous record was %.2f points per game on %s.\n",
-                              points / (double) score.getNumGamesPlayed(),
-                              Score.getHighScore(),
-                              Score.getDateTimeOfHighScore());
+            final Score roundScore;
+            roundScore = new Score(LocalDateTime.now(),
+                                   gamesPlayed,
+                                   correctFirstAttempts,
+                                   correctSecondAttempts,
+                                   incorrectAttempts);
 
-            Score.setHighScore(points, score.getNumGamesPlayed());
-            Score.setDateTimeOfHighScore(score.getDateTimePlayed());
-                    }
-
-        // Append score data to file
-        try (final FileWriter writer = new FileWriter("score.txt", true))
-        {
-            writer.write("Date and Time: " + score.getDateTimePlayed() + "\n");
-            writer.write("Games Played: " + score.getNumGamesPlayed() + "\n");
-            writer.write("Correct First Attempts: " + score.getNumCorrectFirstAttempt() + "\n");
-            writer.write("Correct Second Attempts: " + score.getNumCorrectSecondAttempt() + "\n");
-            writer.write("Incorrect Attempts: " + score.getNumIncorrectTwoAttempts() + "\n");
-            writer.write("Total Score: " + points + "\n\n");
-            System.out.println("Score file updated successfully.");
-        } catch (IOException e)
-        {
-            System.out.println("An error occurred: " + e.getMessage());
+            printReport(roundScore);
+            checkForHighScore(roundScore);
+            Score.appendScoreToFile(roundScore, SCORE_FILE);
         }
     }
 
+    /*
+     * Gives the user a random capital city for them to guess the country.
+     */
     private static int giveCapital(final String key)
     {
-        final Scanner input   = new Scanner(System.in);
-        int           guesses = NOTHING;
-        String        guess;
+        Scanner input   = new Scanner(System.in);
+        int     guesses = NOTHING;
 
-        while (guesses < THIRD_TRY)
+        while (guesses < MAX_GUESSES)
         {
-            System.out.println("What country has the capital city of " +
-                               World.worldMap.get(key).getCapitalCityName() + "?");
-
-            guess = input.nextLine();
+            System.out.println("What country has the capital city of " + World.worldMap.get(key).getCapitalCityName() + "?");
+            String guess = input.nextLine();
 
             if (guess.equalsIgnoreCase(World.worldMap.get(key).getName()))
             {
                 System.out.println("CORRECT!");
                 return guesses;
             }
+
             System.out.println("INCORRECT!");
             guesses++;
         }
-        System.out.println("Sorry, you didn't get it.");
-        System.out.println("The correct answer was " +
-                           World.worldMap.get(key).getName());
+
+        System.out.println("Sorry, the correct answer was " + World.worldMap.get(key).getName());
         return guesses;
     }
 
+    /*
+     * Gives the user a random country for them to guess the capital city.
+     */
     private static int giveCountry(final String key)
     {
-        final Scanner input   = new Scanner(System.in);
-        int           guesses = NOTHING;
-        String        guess;
+        Scanner input   = new Scanner(System.in);
+        int     guesses = NOTHING;
 
-        while (guesses < THIRD_TRY)
+        while (guesses < MAX_GUESSES)
         {
-            System.out.println("What is the capital city of " +
-                               World.worldMap.get(key).getName() + "?");
-
-            guess = input.nextLine();
+            System.out.println("What is the capital city of " + World.worldMap.get(key).getName() + "?");
+            String guess = input.nextLine();
 
             if (guess.equalsIgnoreCase(World.worldMap.get(key).getCapitalCityName()))
             {
                 System.out.println("CORRECT!");
                 return guesses;
             }
+
             System.out.println("INCORRECT!");
             guesses++;
         }
-        System.out.println("Sorry, you didn't get it.");
-        System.out.println("The correct answer was " +
-                           World.worldMap.get(key).getCapitalCityName());
+
+        System.out.println("Sorry, the correct answer was " + World.worldMap.get(key).getCapitalCityName());
         return guesses;
     }
 
+    /*
+     * Gives the user a random fact for them to guess the country.
+     */
     private static int giveFact(final String key)
     {
-        final Random  random          = new Random();
-        final Scanner input           = new Scanner(System.in);
-        int           guesses         = NOTHING;
-        String        guess;
-        final int     randomFactIndex = random.nextInt(RANDOM_SELECTOR);
+        Random  random  = new Random();
+        Scanner input   = new Scanner(System.in);
+        int     guesses = NOTHING;
 
-        while (guesses < THIRD_TRY)
+        int randomFactIndex = random.nextInt(RANDOM_INDEX);
+
+        while (guesses < MAX_GUESSES)
         {
-            System.out.println("What country has this fact: " +
-                               World.worldMap.get(key).getFacts(randomFactIndex) + "?");
-
-            guess = input.nextLine();
+            System.out.println("What country has this fact: " + World.worldMap.get(key).getFacts(randomFactIndex) + "?");
+            String guess = input.nextLine();
 
             if (guess.equalsIgnoreCase(World.worldMap.get(key).getName()))
             {
                 System.out.println("CORRECT!");
                 return guesses;
             }
+
             System.out.println("INCORRECT!");
             guesses++;
         }
-        System.out.println("Sorry, you didn't get it.");
-        System.out.println("The correct answer was " +
-                           World.worldMap.get(key).getName());
+
+        System.out.println("Sorry, the correct answer was " + World.worldMap.get(key).getName());
         return guesses;
     }
 
-    private static void printReport()
+    /*
+     * Calls the toString method from the Score class to display the report of the round.
+     */
+    private static void printReport(final Score score)
     {
-        System.out.println("========================================");
-        System.out.println(score.getNumGamesPlayed() + " word game(s) played");
-        System.out.println(score.getNumCorrectFirstAttempt() + " correct answers on the first attempt");
-        System.out.println(score.getNumCorrectSecondAttempt() + " correct answers on the second attempt");
-        System.out.println(score.getNumIncorrectTwoAttempts() + " incorrect answers on two attempts each");
-        System.out.println("========================================");
+        System.out.println("======================================\n");
+        System.out.println(score);
+        System.out.println("======================================");
+    }
+
+    /*
+     * Checks if the user has a new high score,
+     * and prints the last high score if they do.
+     */
+    private static void checkForHighScore(final Score latestScore) throws IOException
+    {
+        final List<Score> scores    = Score.readScoresFromFile(SCORE_FILE);
+        Score             highScore = null;
+
+        for (Score score : scores)
+        {
+            if (highScore == null || score.getAvgScore() > highScore.getAvgScore())
+            {
+                highScore = score;
+            }
+        }
+
+        if (highScore == null || latestScore.getAvgScore() > highScore.getAvgScore())
+        {
+            System.out.printf("CONGRATULATIONS! You are the new high score with an average of %.2f ppg!\n",
+                              latestScore.getAvgScore());
+            if (highScore != null)
+            {
+                System.out.printf("The previous high score was %.2f ppg on %s",
+                                  highScore.getAvgScore(), highScore.getDate());
+            }
+            else
+            {
+                System.out.println("There was no previous high score.");
+            }
+        }
     }
 }

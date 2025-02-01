@@ -1,113 +1,171 @@
 package ca.bcit.comp2522.termproject.wordgame;
 
+import java.io.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Scanner;
 
 /**
- *
+ * Represents a game score with details such as attempts and timestamp.
  *
  * @author colecampbell
  * @version 1.0
  */
 public class Score
 {
-    private static final int NOTHING = 0;
-
-    private final String dateTimePlayed;
-    private int numGamesPlayed;
-    private int numCorrectFirstAttempt;
-    private int numCorrectSecondAttempt;
-    private int numIncorrectTwoAttempts;
-    private static double highScore;
-    private static String dateTimeOfHighScore;
+    private static final DateTimeFormatter formatter;
+    private static final int               FIRST_TRY_MULTIPLIER     = 2;
+    private static final int               ACTUAL_DATE_STRING_INDEX = 15;
+    private static final int               DATA_HALF                = 1;
 
     static
     {
-        highScore = NOTHING;
-        dateTimeOfHighScore = null;
+        formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     }
 
-    public Score()
+    private final LocalDateTime dateTime;
+    private final int           gamesPlayed;
+    private final int           correctFirstAttempts;
+    private final int           correctSecondAttempts;
+    private final int           incorrectAttempts;
+    private final int           score;
+
+    /**
+     * Constructs a Score object.
+     *
+     * @param dateTime              the date and time of the score
+     * @param gamesPlayed           the number of games played
+     * @param correctFirstAttempts  the number of correct first attempts
+     * @param correctSecondAttempts the number of correct second attempts
+     * @param incorrectAttempts     the number of incorrect attempts
+     */
+    public Score(final LocalDateTime dateTime,
+                 final int gamesPlayed,
+                 final int correctFirstAttempts,
+                 final int correctSecondAttempts,
+                 final int incorrectAttempts)
     {
-        final LocalDateTime     currentTime;
-        final DateTimeFormatter formatter;
-        final String            formattedDateTime;
-
-        currentTime       = LocalDateTime.now();
-        formatter         = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-        formattedDateTime = currentTime.format(formatter);
-
-        dateTimePlayed = formattedDateTime;
-        numGamesPlayed = NOTHING;
-        numCorrectFirstAttempt = NOTHING;
-        numCorrectSecondAttempt = NOTHING;
-        numIncorrectTwoAttempts = NOTHING;
-
+        this.dateTime              = dateTime;
+        this.gamesPlayed           = gamesPlayed;
+        this.correctFirstAttempts  = correctFirstAttempts;
+        this.correctSecondAttempts = correctSecondAttempts;
+        this.incorrectAttempts     = incorrectAttempts;
+        this.score                 = (correctFirstAttempts * FIRST_TRY_MULTIPLIER) +
+                                     correctSecondAttempts;
     }
 
-    public String getDateTimePlayed()
+    /**
+     * Accessor for the total score.
+     *
+     * @return the total score
+     */
+    public int getScore()
     {
-        return dateTimePlayed;
+        return score;
     }
 
-    public int getNumGamesPlayed()
+    /**
+     * Accessor for the average score.
+     *
+     * @return the average score
+     */
+    public double getAvgScore()
     {
-        return numGamesPlayed;
+        return score / (double) gamesPlayed;
     }
 
-    public void addNumGamesPlayed()
+    /**
+     * Accessor for the date and time.
+     *
+     * @return the date and time of the game
+     */
+    public String getDate()
     {
-        this.numGamesPlayed ++;
+        return dateTime.format(formatter);
     }
 
-    public int getNumCorrectFirstAttempt()
+    /**
+     * Overrides the toString method.
+     *
+     * @return all the instance variables
+     */
+    @Override
+    public String toString()
     {
-        return numCorrectFirstAttempt;
+        return String.format(
+                """
+                Date and Time: %s
+                Games Played: %d
+                Correct First Attempts: %d
+                Correct Second Attempts: %d
+                Incorrect Attempts: %d
+                Total Score: %d points
+                """,
+                dateTime.format(formatter),
+                gamesPlayed,
+                correctFirstAttempts,
+                correctSecondAttempts,
+                incorrectAttempts,
+                score);
     }
 
-    public void addNumCorrectFirstAttempt()
+    /**
+     * Appends a score entry to a file.
+     *
+     * @param score    the score to append
+     * @param filePath the file to store scores
+     * @throws IOException if an I/O error occurs
+     */
+    public static void appendScoreToFile(final Score score,
+                                         final String filePath) throws IOException
     {
-        this.numCorrectFirstAttempt ++;
+        try (final FileWriter writer = new FileWriter(filePath, true))
+        {
+            writer.write(score.toString() + "\n");
+        }
     }
 
-    public int getNumCorrectSecondAttempt()
+    /**
+     * Reads scores from a file.
+     *
+     * @param filePath the file to read scores from
+     * @return a list of Score objects
+     * @throws IOException if an I/O error occurs
+     */
+    public static List<Score> readScoresFromFile(final String filePath) throws IOException
     {
-        return numCorrectSecondAttempt;
-    }
+        final List<Score> scores;
+        final File        file;
 
-    public void addNumCorrectSecondAttempt()
-    {
-        this.numCorrectSecondAttempt ++;
-    }
+        scores = new ArrayList<>();
+        file   = new File(filePath);
 
-    public int getNumIncorrectTwoAttempts()
-    {
-        return numIncorrectTwoAttempts;
-    }
+        if (!file.exists())
+        {
+            System.out.println("File does not exist");
+            return scores;
+        }
 
-    public void addNumIncorrectTwoAttempts()
-    {
-        this.numIncorrectTwoAttempts ++;
-    }
+        try (final Scanner scanner = new Scanner(file))
+        {
+            while (scanner.hasNextLine())
+            {
+                String line = scanner.nextLine();
+                if (line.startsWith("Date and Time: "))
+                {
+                    LocalDateTime dateTime              = LocalDateTime.parse(line.substring(ACTUAL_DATE_STRING_INDEX), formatter);
+                    int           gamesPlayed           = Integer.parseInt(scanner.nextLine().split(": ")[DATA_HALF]);
+                    int           correctFirstAttempts  = Integer.parseInt(scanner.nextLine().split(": ")[DATA_HALF]);
+                    int           correctSecondAttempts = Integer.parseInt(scanner.nextLine().split(": ")[DATA_HALF]);
+                    int           incorrectAttempts     = Integer.parseInt(scanner.nextLine().split(": ")[DATA_HALF]);
+                    scanner.nextLine(); // Skip score line
+                    scores.add(new Score(dateTime, gamesPlayed, correctFirstAttempts, correctSecondAttempts, incorrectAttempts));
+                }
+            }
+        }
 
-    public static double getHighScore()
-    {
-        return highScore;
-    }
-
-    public static void setHighScore(final int points,
-                                    final int gamesPlayed)
-    {
-        Score.highScore = points / (double) gamesPlayed;
-    }
-
-    public static String getDateTimeOfHighScore()
-    {
-        return dateTimeOfHighScore;
-    }
-
-    public static void setDateTimeOfHighScore(final String dateTimeOfHighScore)
-    {
-        Score.dateTimeOfHighScore = dateTimeOfHighScore;
+        return scores;
     }
 }
