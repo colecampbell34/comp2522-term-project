@@ -38,7 +38,7 @@ public class WordGame
     /**
      * Initializes variables for a new round and commences play.
      *
-     * @throws IOException  if a I/O error occurs
+     * @throws IOException if a I/O error occurs
      */
     public static void play() throws IOException
     {
@@ -69,8 +69,11 @@ public class WordGame
 
             try
             {
-                File    file        = new File("src/resources/" + fileName + ".txt");
-                Scanner fileScanner = new Scanner(file);
+                final File    file;
+                final Scanner fileScanner;
+
+                file        = new File("src/resources/" + fileName + ".txt");
+                fileScanner = new Scanner(file);
 
                 while (fileScanner.hasNext())
                 {
@@ -106,18 +109,27 @@ public class WordGame
      */
     private static void playRound() throws IOException
     {
-        Scanner      input  = new Scanner(System.in);
-        Random       random = new Random();
-        List<String> keys   = new ArrayList<>(World.worldMap.keySet());
+        final Scanner      input;
+        final Random       random;
+        final List<String> keys;
+        String             userChoice;
+
+        input  = new Scanner(System.in);
+        random = new Random();
+        keys   = new ArrayList<>(World.worldMap.keySet());
 
         System.out.println("\n=====New Round=====\n");
 
         for (int i = 0; i < GUESSES_PER_ROUND; i++)
         {
-            String randomKey = keys.get(random.nextInt(keys.size()));
-            int    randomNum = random.nextInt(RANDOM_SELECTOR);
+            final String randomKey;
+            final int    randomNum;
+            final int    guesses;
 
-            int guesses = switch (randomNum)
+            randomKey = keys.get(random.nextInt(keys.size()));
+            randomNum = random.nextInt(RANDOM_SELECTOR);
+
+            guesses = switch (randomNum)
             {
                 case GIVE_CAPITAL -> giveCapital(randomKey);
                 case GIVE_COUNTRY -> giveCountry(randomKey);
@@ -145,9 +157,10 @@ public class WordGame
 
         System.out.println("============ Round Over ============");
         System.out.println("\nYes to play again, No to go back to the main menu");
+        userChoice = input.next().toUpperCase();
 
-        String userChoice = input.next().toUpperCase();
-        while (!userChoice.equals("YES") && !userChoice.equals("NO"))
+        while (!userChoice.equals("YES") &&
+               !userChoice.equals("NO"))
         {
             System.out.println("Invalid choice, please try again");
             userChoice = input.next().toUpperCase();
@@ -155,7 +168,6 @@ public class WordGame
 
         if (userChoice.equals("YES"))
         {
-            // Play another round
             playRound();
         }
         else
@@ -178,8 +190,11 @@ public class WordGame
      */
     private static int giveCapital(final String key)
     {
-        Scanner input   = new Scanner(System.in);
-        int     guesses = NOTHING;
+        final Scanner input;
+        int           guesses;
+
+        input   = new Scanner(System.in);
+        guesses = NOTHING;
 
         while (guesses < MAX_GUESSES)
         {
@@ -205,8 +220,11 @@ public class WordGame
      */
     private static int giveCountry(final String key)
     {
-        Scanner input   = new Scanner(System.in);
-        int     guesses = NOTHING;
+        final Scanner input;
+        int           guesses;
+
+        input   = new Scanner(System.in);
+        guesses = NOTHING;
 
         while (guesses < MAX_GUESSES)
         {
@@ -232,11 +250,15 @@ public class WordGame
      */
     private static int giveFact(final String key)
     {
-        Random  random  = new Random();
-        Scanner input   = new Scanner(System.in);
-        int     guesses = NOTHING;
+        final Random  random;
+        final Scanner input;
+        int           guesses;
+        final int     randomFactIndex;
 
-        int randomFactIndex = random.nextInt(RANDOM_INDEX);
+        random          = new Random();
+        input           = new Scanner(System.in);
+        guesses         = NOTHING;
+        randomFactIndex = random.nextInt(RANDOM_INDEX);
 
         while (guesses < MAX_GUESSES)
         {
@@ -273,10 +295,13 @@ public class WordGame
      */
     private static void checkForHighScore(final Score latestScore) throws IOException
     {
-        final List<Score> scores    = Score.readScoresFromFile(SCORE_FILE);
-        Score             highScore = null;
+        final List<Score> scores;
+        Score             highScore;
 
-        for (Score score : scores)
+        scores    = Score.readScoresFromFile(SCORE_FILE);
+        highScore = null;
+
+        for (final Score score : scores)
         {
             if (highScore == null || score.getAvgScore() > highScore.getAvgScore())
             {
@@ -284,7 +309,8 @@ public class WordGame
             }
         }
 
-        if (highScore == null || latestScore.getAvgScore() > highScore.getAvgScore())
+        if (highScore == null ||
+            latestScore.getAvgScore() > highScore.getAvgScore())
         {
             System.out.printf("CONGRATULATIONS! You are the new high score with an average of %.2f ppg!\n",
                               latestScore.getAvgScore());
