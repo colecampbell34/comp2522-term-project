@@ -16,6 +16,7 @@ public class WordGame
 {
     private static final int    NOTHING           = 0;
     private static final int    GUESSES_PER_ROUND = 10;
+    private static final int    LAST_QUESTION     = 9;
     private static final int    RANDOM_SELECTOR   = 3;
     private static final int    GIVE_CAPITAL      = 0;
     private static final int    GIVE_COUNTRY      = 1;
@@ -137,7 +138,10 @@ public class WordGame
                 default -> throw new IllegalArgumentException("Unexpected value: " + randomNum);
             };
 
-            System.out.println("\n=====Next Question=====\n");
+            if (i < LAST_QUESTION)
+            {
+                System.out.println("\n===== NEXT QUESTION =====\n");
+            }
 
             if (guesses == FIRST_TRY)
             {
@@ -155,7 +159,7 @@ public class WordGame
 
         gamesPlayed++;
 
-        System.out.println("============ Round Over ============");
+        System.out.println("\n============ ROUND OVER ============");
         System.out.println("\nYes to play again, No to go back to the main menu");
         userChoice = input.next().toUpperCase();
 
