@@ -10,5 +10,5 @@ import java.util.HashMap;
  */
 public class World
 {
-    public static HashMap<String, Country> worldMap = new HashMap<>();
+    public static final HashMap<String, Country> worldMap = new HashMap<>();
 }

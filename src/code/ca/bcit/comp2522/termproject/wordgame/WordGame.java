@@ -10,7 +10,7 @@ import java.util.*;
  * Word Game that tests players on country capitals and facts.
  *
  * @author colecampbell
- * @version 1.1
+ * @version 1.0
  */
 public class WordGame
 {
