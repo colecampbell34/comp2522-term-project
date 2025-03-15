@@ -10,6 +10,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -78,6 +79,7 @@ public class TwistedWordle extends Application
             return;
         }
 
+        // Get player names from the console
         final Scanner input;
         input = new Scanner(System.in);
         System.out.print("Enter Player 1 Name: ");
@@ -92,7 +94,8 @@ public class TwistedWordle extends Application
         currentRound = 1;
 
         // Create the grid for displaying guesses (Lecture 10: Graphical User Interfaces)
-        GridPane gridPane = new GridPane();
+        final GridPane gridPane;
+        gridPane = new GridPane();
         gridPane.setAlignment(Pos.CENTER);
         gridPane.setHgap(10);
         gridPane.setVgap(10);
@@ -103,7 +106,8 @@ public class TwistedWordle extends Application
         {
             for (int col = 0; col < WORD_LENGTH; col++)
             {
-                Label label = new Label("");
+                final Label label;
+                label = new Label("");
                 label.setFont(Font.font(20));
                 label.setMinSize(40, 40);
                 label.setAlignment(Pos.CENTER);
@@ -118,10 +122,21 @@ public class TwistedWordle extends Application
         inputField.setFont(Font.font(20));
         inputField.setMaxWidth(200);
 
-        Button submitButton = new Button("Submit");
+        // Allow submitting guesses using the Enter key
+        inputField.setOnKeyPressed(e ->
+                                   {
+                                       if (e.getCode() == KeyCode.ENTER)
+                                       {
+                                           handleGuess();
+                                       }
+                                   });
+
+        final Button submitButton;
+        submitButton = new Button("Submit");
         submitButton.setOnAction(e -> handleGuess());
 
-        HBox inputBox = new HBox(10, inputField, submitButton);
+        final HBox inputBox;
+        inputBox = new HBox(10, inputField, submitButton);
         inputBox.setAlignment(Pos.CENTER);
 
         // Message label
@@ -141,16 +156,59 @@ public class TwistedWordle extends Application
         roundLabel.setFont(Font.font(20));
 
         // Main layout
-        VBox root = new VBox(20, gridPane, inputBox, messageLabel, timerLabel, scoreLabel, roundLabel);
+        final VBox root;
+        root = new VBox(20, gridPane, inputBox, messageLabel, timerLabel, scoreLabel, roundLabel);
         root.setAlignment(Pos.CENTER);
         root.setPadding(new Insets(20));
 
-        Scene scene = new Scene(root, 600, 700); // Increased width to 600
+        final Scene scene;
+        scene = new Scene(root, 600, 700); // Increased width to 600
         primaryStage.setScene(scene);
         primaryStage.show();
 
-        // Start the timer
-        startTimer();
+        // Show the instructions popup after the main window is displayed
+        showInstructionsPopup(primaryStage);
+    }
+
+    // Show a popup box explaining the game rules
+    private void showInstructionsPopup(final Stage primaryStage)
+    {
+        final Stage popupStage;
+        popupStage = new Stage();
+        popupStage.initModality(Modality.WINDOW_MODAL);
+        popupStage.initOwner(primaryStage); // Set the main window as the owner
+        popupStage.initStyle(StageStyle.UTILITY);
+        popupStage.setTitle("How to Play");
+
+        final Label rulesLabel = new Label(
+                "Welcome to Twisted Wordle!\n\n" +
+                "1. Each player takes turns guessing a 5-letter word.\n" +
+                "2. You have " + MAX_ATTEMPTS + " attempts to guess the word.\n" +
+                "3. Green letters are correct and in the right position.\n" +
+                "4. Yellow letters are correct but in the wrong position.\n" +
+                "5. Gray letters are not in the word.\n" +
+                "6. The game has " + TOTAL_ROUNDS + " rounds. The player with the highest score wins!\n\n" +
+                "Press 'Start' to begin!"
+        );
+        rulesLabel.setFont(Font.font(16));
+        rulesLabel.setWrapText(true);
+
+        final Button startButton = new Button("Start");
+        startButton.setOnAction(e ->
+                                {
+                                    popupStage.close();
+                                    startTimer(); // Start the timer after the popup is closed
+                                });
+
+        final VBox popupLayout;
+        popupLayout = new VBox(20, rulesLabel, startButton);
+        popupLayout.setAlignment(Pos.CENTER);
+        popupLayout.setPadding(new Insets(20));
+
+        final Scene popupScene;
+        popupScene = new Scene(popupLayout, 400, 300);
+        popupStage.setScene(popupScene);
+        popupStage.showAndWait();
     }
 
     private List<String> loadWordsFromFile(final String filename)
@@ -235,7 +293,14 @@ public class TwistedWordle extends Application
 
         if (guess.equals(targetWord))
         {
-            currentPlayer.addScore(calculateScore(attemptsLeft));
+            // Calculate time left
+            final long elapsedTime = (System.currentTimeMillis() - startTime) / 1000;
+            final int timeLeft = TURN_TIME - (int) elapsedTime;
+
+            // Calculate score based on attempts left and time left
+            final int score = calculateScore(attemptsLeft, timeLeft);
+            currentPlayer.addScore(score);
+
             messageLabel.setText("Congratulations, " + currentPlayer.getName() + "! You've guessed the word!");
             inputField.setDisable(true);
             updateScoreboard();
@@ -304,10 +369,17 @@ public class TwistedWordle extends Application
         }
     }
 
-    // Calculate score based on attempts left (Lecture 4: Abstract Methods, Interfaces)
-    private int calculateScore(final int attemptsLeft)
+    // Calculate score based on attempts left and time left
+    private int calculateScore(final int attemptsLeft, final int timeLeft)
     {
-        return attemptsLeft * 10; // 10 points per remaining attempt
+        // Base score for guessing the word
+        final int baseScore = 50;
+
+        // Bonus for remaining attempts (10 points per attempt)
+        final int attemptsBonus = attemptsLeft * 10;
+
+        // Total score
+        return baseScore + attemptsBonus + timeLeft;
     }
 
     // Update the scoreboard
