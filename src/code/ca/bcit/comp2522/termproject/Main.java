@@ -1,5 +1,6 @@
 package ca.bcit.comp2522.termproject;
 
+import ca.bcit.comp2522.termproject.twistedwordle.TwistedWordle;
 import ca.bcit.comp2522.termproject.wordgame.WordGame;
 import java.io.IOException;
 import java.util.Scanner;
@@ -78,7 +79,7 @@ public class Main
      */
     private static void playTwistedWordleGame()
     {
-        System.out.println("Starting the Twisted Wordle game...\n(Placeholder functionality)");
-        // Add logic for the Twisted Wordle game here.
+        System.out.println("Starting the Multiplayer Wordle game...");
+        TwistedWordle.main(null);
     }
 }
