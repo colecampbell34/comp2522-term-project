@@ -7,6 +7,6 @@ lesson 6: inner class (Player)
 lesson 7: lambda used with javaFX and streams used when loading words from file
 lesson 8: path classes used to read word file
 lesson 9: entire game uses javaFX
-lesson 10:
-lesson 11:
-lesson 12:
+lesson 10: TODO concurrency
+lesson 11: TODO design patterns
+lesson 12: made a simple unit test for the calculateScore method

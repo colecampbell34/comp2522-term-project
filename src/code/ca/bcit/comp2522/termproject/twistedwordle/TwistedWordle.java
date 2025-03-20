@@ -471,7 +471,6 @@ public class TwistedWordle extends Application
         popupStage.showAndWait();
     }
 
-    // Player class (Lecture 1: Classes, Objects, Methods)
     private static class Player
     {
         private final String name;

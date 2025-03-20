@@ -1,6 +1,23 @@
 "can you generate a wordle game for me in java, using simple javafx" was my first prompt
-from here i looked things over and slowly asked for improvements, building up to a multiplayer java game.
+from here i looked things over and slowly asked for improvements, building up to a multiplayer wordle game.
+i would usually ask the ai to reference the comp2522 curriculum and only use things available there.
+after about 5 solid iterations i was left with the base for a multiplayer wordle game that i felt was viable to
+use and build off of.
+after all the ai work, i had to go in and find all of the uses from each lecture, and add some that were missed,
+for example there was nothing from lecture 6 used, so i made the player class an inner class.
+after adding all of my own things, changing the style to suit the classes best practices, and thoroughly testing,
+i then used a different ai and asked it to proofread and look for any errors in the code.
+it was able to find some problems and helped me fix them, which showed me the importance of cross referencing.
 
 the upsides:
+- saves an unbelievable amount of time
+- spots minor bugs that i would have missed
+- comes up with ways to use certain criteria and mix it into my game
+- can give me multiple iterations of code to see which version i like best
+- can reference websites and textbooks instantly
 
 the downsides:
+- can make lots of mistakes
+- hard to deal with sometimes because i have to re-explain everything multiple times
+- some models of chatgpt are better than others, and i get limited access to the better models with the free version
+- default code style does not align with our classes best practices
