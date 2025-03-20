@@ -1,5 +1,6 @@
 package ca.bcit.comp2522.termproject;
 
+import ca.bcit.comp2522.termproject.numbergame.NumberGameMain;
 import ca.bcit.comp2522.termproject.twistedwordle.TwistedWordle;
 import ca.bcit.comp2522.termproject.wordgame.WordGame;
 import java.io.IOException;
@@ -70,8 +71,8 @@ public class Main
      */
     private static void playNumberGame()
     {
-        System.out.println("Starting the Number game...\n(Placeholder functionality)");
-        // Add logic for the Number game here.
+        System.out.println("Starting the Number game...");
+        NumberGameMain.main(null);
     }
 
     /*
