@@ -35,7 +35,7 @@ import java.util.stream.Collectors;
  * @author colecampbell
  * @version 1.0
  */
-public class TwistedWordle extends Application
+public class TwistedWordle extends Application implements Scorable
 {
 
     private static final int MAX_ATTEMPTS = 6;
@@ -61,11 +61,19 @@ public class TwistedWordle extends Application
     private AnimationTimer timer;
     private int            currentRound;
 
+    /**
+     * The entry point for this program.
+     * @param args unused
+     */
     public static void main(final String[] args)
     {
         launch(args);
     }
 
+    /**
+     * Overrides the javaFX start method.
+     * @param primaryStage the stage
+     */
     @Override
     public void start(final Stage primaryStage)
     {
@@ -170,7 +178,7 @@ public class TwistedWordle extends Application
         showInstructionsPopup(primaryStage);
     }
 
-    // Show a popup box explaining the game rules
+    /* A popup explaining the instructions for the game. */
     private void showInstructionsPopup(final Stage primaryStage)
     {
         final Stage popupStage;
@@ -211,6 +219,7 @@ public class TwistedWordle extends Application
         popupStage.showAndWait();
     }
 
+    /* Loads the 5 letter words from words.txt */
     private List<String> loadWordsFromFile(final String filename)
     {
         try
@@ -227,6 +236,7 @@ public class TwistedWordle extends Application
         }
     }
 
+    /* Calculates and displays guess result. */
     private void handleGuess()
     {
         final String guess;
@@ -329,7 +339,7 @@ public class TwistedWordle extends Application
         }
     }
 
-    // Switch players (Lecture 3: Polymorphism, Substitution)
+    /* Switches to the other players turn. */
     private void switchPlayer()
     {
         if (currentPlayer == player1)
@@ -355,7 +365,7 @@ public class TwistedWordle extends Application
         startTimer();
     }
 
-    // Reset the grid for the next player
+    /* Resets the wordle grid for the next player. */
     private void resetGrid()
     {
         for (int row = 0; row < MAX_ATTEMPTS; row++)
@@ -368,7 +378,8 @@ public class TwistedWordle extends Application
         }
     }
 
-    // Calculate score based on attempts left and time left
+    /* Calculate score based on attempts left and time left. */
+    @Override
     public int calculateScore(final int attemptsLeft, final int timeLeft)
     {
         // Base score for guessing the word
@@ -381,13 +392,13 @@ public class TwistedWordle extends Application
         return baseScore + attemptsBonus + timeLeft;
     }
 
-    // Update the scoreboard
+    /* Update the scoreboard. */
     private void updateScoreboard()
     {
         scoreLabel.setText("Scores: " + player1.getName() + ": " + player1.getScore() + " | " + player2.getName() + ": " + player2.getScore());
     }
 
-    // Start the timer for the current player's turn
+    /* Start the timer for the current player's turn. */
     private void startTimer()
     {
         startTime = System.currentTimeMillis();
@@ -415,7 +426,7 @@ public class TwistedWordle extends Application
         timer.start();
     }
 
-    // End the game and display the final scores
+    /* End the game and display the final scores. */
     private void endGame()
     {
         timer.stop();
@@ -426,7 +437,7 @@ public class TwistedWordle extends Application
         Platform.runLater(this::showWinnerPopup);
     }
 
-    // Show a popup box with the winner and a close button
+    /* Show a popup box with the winner and a close button. */
     private void showWinnerPopup()
     {
         final Stage popupStage;
@@ -471,6 +482,7 @@ public class TwistedWordle extends Application
         popupStage.showAndWait();
     }
 
+    /* Nested inner class for a player. */
     private static class Player
     {
         private final String name;

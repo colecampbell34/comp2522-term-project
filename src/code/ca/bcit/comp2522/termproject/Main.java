@@ -35,7 +35,7 @@ public class Main
             {
                 case 'W' -> playWordGame();
                 case 'N' -> playNumberGame();
-                case 'M' -> playTwistedWordleGame();
+                case 'T' -> playTwistedWordleGame();
                 case 'Q' -> System.out.println("Thank you for playing! Goodbye!");
                 default -> System.out.println("Invalid choice. Please try again.");
             }
@@ -44,7 +44,7 @@ public class Main
         input.close();
     }
 
-    /**
+    /*
      * Prints the menu options.
      */
     private static void printMenu()
@@ -52,11 +52,11 @@ public class Main
         System.out.println("\nPlease choose which game you would like to play:");
         System.out.println("Press W to play the Word game.");
         System.out.println("Press N to play the Number game.");
-        System.out.println("Press M to play the Twisted Wordle game.");
+        System.out.println("Press T to play the Twisted Wordle game.");
         System.out.println("Press Q to quit.");
     }
 
-    /**
+    /*
      * Simulates playing the Word game.
      */
     private static void playWordGame() throws IOException
@@ -65,7 +65,7 @@ public class Main
         WordGame.play();
     }
 
-    /**
+    /*
      * Simulates playing the Number game.
      */
     private static void playNumberGame()
@@ -74,7 +74,7 @@ public class Main
         // Add logic for the Number game here.
     }
 
-    /**
+    /*
      * Simulates playing the Twisted Wordle game.
      */
     private static void playTwistedWordleGame()
