@@ -227,7 +227,6 @@ public class TwistedWordle extends Application
         }
     }
 
-    // Handle player's guess (Lecture 2: Exception Handling)
     private void handleGuess()
     {
         final String guess;
@@ -370,7 +369,7 @@ public class TwistedWordle extends Application
     }
 
     // Calculate score based on attempts left and time left
-    private int calculateScore(final int attemptsLeft, final int timeLeft)
+    public int calculateScore(final int attemptsLeft, final int timeLeft)
     {
         // Base score for guessing the word
         final int baseScore = 50;

@@ -1,0 +1,6 @@
+"can you generate a wordle game for me in java, using simple javafx" was my first prompt
+from here i looked things over and slowly asked for improvements, building up to a multiplayer java game.
+
+the upsides:
+
+the downsides:
