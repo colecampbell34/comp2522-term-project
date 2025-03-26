@@ -3,10 +3,10 @@ lesson 2: exception handling when loading words from file
 lesson 3: substitution used with currentPlayer being either player1 or player2
 lesson 4: twisted world implements the scorable interface
 lesson 5: collections with List<String>
-lesson 6: inner class (Player)
+lesson 6: TODO
 lesson 7: lambda used with javaFX and streams used when loading words from file
 lesson 8: path classes used to read word file
 lesson 9: entire game uses javaFX
-lesson 10: TODO concurrency
-lesson 11: TODO design patterns
+lesson 10: Concurrency with loading words
+lesson 11: Factory design pattern used in PlayerFactory
 lesson 12: made a simple unit test for the calculateScore method

@@ -4,6 +4,7 @@ import javafx.animation.AnimationTimer;
 import javafx.animation.PauseTransition;
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.concurrent.Task;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -28,6 +29,8 @@ import java.util.List;
 import java.util.Random;
 import java.util.Scanner;
 import java.util.stream.Collectors;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * A multiplayer wordle game using JavaFX,
@@ -38,12 +41,13 @@ import java.util.stream.Collectors;
 public class TwistedWordle extends Application implements Scorable
 {
 
-    private static final int MAX_ATTEMPTS = 6;
-    private static final int WORD_LENGTH  = 5;
-    private static final int TURN_TIME    = 90;
-    private static final int TOTAL_ROUNDS = 1;
-    private static final int DELAY        = 5;
-    private static final int NOTHING      = 0;
+    private static final int             MAX_ATTEMPTS    = 6;
+    private static final int             WORD_LENGTH     = 5;
+    private static final int             TURN_TIME       = 90;
+    private static final int             TOTAL_ROUNDS    = 1;
+    private static final int             DELAY           = 5;
+    private static final int             NOTHING         = 0;
+    private final        ExecutorService executorService = Executors.newSingleThreadExecutor();
 
     private String         targetWord;
     private int            attemptsLeft;
@@ -63,6 +67,7 @@ public class TwistedWordle extends Application implements Scorable
 
     /**
      * The entry point for this program.
+     *
      * @param args unused
      */
     public static void main(final String[] args)
@@ -72,6 +77,7 @@ public class TwistedWordle extends Application implements Scorable
 
     /**
      * Overrides the javaFX start method.
+     *
      * @param primaryStage the stage
      */
     @Override
@@ -79,13 +85,9 @@ public class TwistedWordle extends Application implements Scorable
     {
         primaryStage.setTitle("Wordle Game");
 
-        // Load words from file (Lecture 7: File NIO.2)
-        wordBatch = loadWordsFromFile("src/resources/words.txt");
-        if (wordBatch.isEmpty())
-        {
-            System.out.println("No words found in the file. Exiting.");
-            return;
-        }
+        // Load words asynchronously from file (Lecture 7: File NIO.2)
+        loadWordsAsync("src/resources/words.txt");
+        // Note: Asynchronous loading; subsequent game initialization may need to account for load completion.
 
         // Get player names from the console
         final Scanner input;
@@ -219,21 +221,38 @@ public class TwistedWordle extends Application implements Scorable
         popupStage.showAndWait();
     }
 
-    /* Loads the 5 letter words from words.txt */
-    private List<String> loadWordsFromFile(final String filename)
+    /* Loads the word bank asynchronously */
+    public void loadWordsAsync(final String filename)
     {
-        try
+        Task<List<String>> wordLoadTask = new Task<>()
         {
-            // (Lecture 8: Streams and Paths)
-            return Files.readAllLines(Paths.get(filename))
-                        .stream()
-                        .filter(word -> word.length() == WORD_LENGTH)
-                        .collect(Collectors.toList());
-        } catch (final IOException e)
-        {
-            System.out.println("Error reading file: " + filename);
-            return new ArrayList<>();
-        }
+            @Override
+            protected List<String> call() throws IOException
+            {
+                return Files.readAllLines(Paths.get(filename))
+                            .stream()
+                            .filter(word -> word.length() == WORD_LENGTH)
+                            .collect(Collectors.toList());
+            }
+        };
+
+        wordLoadTask.setOnSucceeded(event ->
+                                    {
+                                        wordBatch = wordLoadTask.getValue();
+                                        if (wordBatch.isEmpty())
+                                        {
+                                            Platform.runLater(() -> messageLabel.setText("No words found!"));
+                                        }
+                                        else
+                                        {
+                                            targetWord = wordBatch.get(new Random().nextInt(wordBatch.size())).toUpperCase();
+                                        }
+                                    });
+
+        wordLoadTask.setOnFailed(event ->
+                                         Platform.runLater(() -> messageLabel.setText("Error loading words!")));
+
+        executorService.execute(wordLoadTask);
     }
 
     /* Calculates and displays guess result. */
@@ -304,7 +323,7 @@ public class TwistedWordle extends Application implements Scorable
         {
             // Calculate time left
             final long elapsedTime = (System.currentTimeMillis() - startTime) / 1000;
-            final int timeLeft = TURN_TIME - (int) elapsedTime;
+            final int  timeLeft    = TURN_TIME - (int) elapsedTime;
 
             // Calculate score based on attempts left and time left
             final int score = calculateScore(attemptsLeft, timeLeft);
@@ -340,7 +359,7 @@ public class TwistedWordle extends Application implements Scorable
     }
 
     /* Switches to the other players turn. */
-    private void switchPlayer()
+    public void switchPlayer()
     {
         if (currentPlayer == player1)
         {
@@ -482,31 +501,39 @@ public class TwistedWordle extends Application implements Scorable
         popupStage.showAndWait();
     }
 
-    /* Nested inner class for a player. */
-    private static class Player
+    public Player getCurrentPlayer()
     {
-        private final String name;
-        private       int    score;
+        return currentPlayer;
+    }
 
-        public Player(final String name)
-        {
-            this.name  = name;
-            this.score = 0;
-        }
+    public Player getPlayer1()
+    {
+        return player1;
+    }
 
-        public String getName()
-        {
-            return name;
-        }
+    public Player getPlayer2()
+    {
+        return player2;
+    }
 
-        public int getScore()
-        {
-            return score;
-        }
+    public void setCurrentPlayer(final Player player)
+    {
+        this.currentPlayer = player;
+    }
 
-        public void addScore(final int points)
-        {
-            score += points;
-        }
+    public void setPlayers(final Player player1, final Player player2)
+    {
+        this.player1 = player1;
+        this.player2 = player2;
+    }
+
+    public List<String> getWordBatch()
+    {
+        return wordBatch;
+    }
+
+    public String getTargetWord()
+    {
+        return targetWord;
     }
 }
