@@ -3,51 +3,71 @@ package ca.bcit.comp2522.termproject;
 import ca.bcit.comp2522.termproject.numbergame.NumberGameMain;
 import ca.bcit.comp2522.termproject.twistedwordle.TwistedWordle;
 import ca.bcit.comp2522.termproject.wordgame.WordGame;
+import javafx.application.Platform;
+
 import java.io.IOException;
 import java.util.Scanner;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * This is the entry point of the program.
+ * The main class for Cole Campbell's 2522 term project.
  *
  * @author colecampbell
  * @version 1.0
  */
 public class Main
 {
-    private static final int FIRST_CHAR = 0;
+    private static final int           FIRST_CHAR  = 0;
+    private static final AtomicBoolean gameRunning = new AtomicBoolean(false);
+    private static final Scanner       input       = new Scanner(System.in);
 
-    public static void main(final String[] args) throws IOException
+    public static void main(String[] args)
     {
-        Scanner input = new Scanner(System.in);
-
-        char userChoice;
+        Platform.startup(() ->
+                         {
+                         });
+        Platform.setImplicitExit(false);
 
         System.out.println("Welcome to Cole's comp2522 term project!");
         System.out.println("----------------------------------------");
 
-        do
-        {
-            printMenu();
+        new Thread(() ->
+                   {
+                       while (true)
+                       {
+                           if (!gameRunning.get())
+                           {
+                               printMenu();
+                               char userChoice = input.next().charAt(FIRST_CHAR);
+                               userChoice = Character.toUpperCase(userChoice);
 
-            userChoice = input.next().charAt(FIRST_CHAR);
-            userChoice = Character.toUpperCase(userChoice);
-
-            switch (userChoice)
-            {
-                case 'W' -> playWordGame();
-                case 'N' -> playNumberGame();
-                case 'T' -> playTwistedWordleGame();
-                case 'Q' -> System.out.println("Thank you for playing! Goodbye!");
-                default -> System.out.println("Invalid choice. Please try again.");
-            }
-        } while (userChoice != 'Q');
-
-        input.close();
+                               switch (userChoice)
+                               {
+                                   case 'W' -> playWordGame();
+                                   case 'N' -> playNumberGame();
+                                   case 'T' -> playTwistedWordleGame();
+                                   case 'Q' ->
+                                   {
+                                       System.out.println("Thank you for playing! Goodbye!");
+                                       System.exit(0);
+                                   }
+                                   default -> System.out.println("Invalid choice. Please try again.");
+                               }
+                           }
+                           else
+                           {
+                               try
+                               {
+                                   Thread.sleep(100);
+                               } catch (InterruptedException e)
+                               {
+                                   Thread.currentThread().interrupt();
+                               }
+                           }
+                       }
+                   }).start();
     }
 
-    /*
-     * Prints the menu options.
-     */
     private static void printMenu()
     {
         System.out.println("\nPlease choose which game you would like to play:");
@@ -57,30 +77,29 @@ public class Main
         System.out.println("Press Q to quit.");
     }
 
-    /*
-     * Simulates playing the Word game.
-     */
-    private static void playWordGame() throws IOException
+    private static void playWordGame()
     {
-        System.out.println("Starting the Word game...");
-        WordGame.play();
+        try
+        {
+            System.out.println("Starting the Word game...");
+            WordGame.play();
+        } catch (IOException e)
+        {
+            System.err.println("Error starting Word game: " + e.getMessage());
+        }
     }
 
-    /*
-     * Simulates playing the Number game.
-     */
     private static void playNumberGame()
     {
         System.out.println("Starting the Number game...");
-        NumberGameMain.main(null);
+        gameRunning.set(true);
+        NumberGameMain.launchGame(() -> gameRunning.set(false));
     }
 
-    /*
-     * Simulates playing the Twisted Wordle game.
-     */
     private static void playTwistedWordleGame()
     {
         System.out.println("Starting the Multiplayer Wordle game...");
-        TwistedWordle.main(null);
+        gameRunning.set(true);
+        TwistedWordle.launchGame(() -> gameRunning.set(false));
     }
 }

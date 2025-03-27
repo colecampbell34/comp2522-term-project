@@ -1,41 +1,59 @@
 package ca.bcit.comp2522.termproject.numbergame;
 
 import javafx.application.Application;
-import javafx.geometry.Pos;
-import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.VBox;
+import javafx.application.Platform;
 import javafx.stage.Stage;
-import javafx.scene.control.Alert;
-import javafx.scene.control.ButtonType;
-
-import java.util.Arrays;
-import java.util.Optional;
-import java.util.Random;
 
 /**
- * The main class for the number game.
+ * Launches the UI for the number game.
+ *
+ * @author colecampbell
+ * @version 1.0
  */
-public class NumberGameMain extends Application
+public final class NumberGameMain extends Application
 {
+    private static Stage    currentStage;
+    private static Runnable onCloseCallback;
+
     /**
-     * Overrides the javafx start method.
+     * Launches the game.
+     * @param callback the runnable object
+     */
+    public static void launchGame(final Runnable callback)
+    {
+        onCloseCallback = callback;
+        Platform.runLater(() ->
+                          {
+                              try
+                              {
+                                  if (currentStage != null)
+                                  {
+                                      currentStage.close();
+                                  }
+                                  currentStage = new Stage();
+                                  new NumberGameMain().start(currentStage);
+                              } catch (final Exception e)
+                              {
+                                  e.printStackTrace();
+                              }
+                          });
+    }
+
+    /**
+     * Starts the UI.
      * @param primaryStage the stage
      */
     @Override
     public void start(final Stage primaryStage)
     {
-        new NumberGame(primaryStage);
-    }
-
-    /**
-     * The entry point for the project.
-     * @param args unused
-     */
-    public static void main(final String[] args)
-    {
-        launch(args);
+        final NumberGame game;
+        game = new NumberGame(primaryStage);
+        primaryStage.setOnHidden(e ->
+                                 {
+                                     if (onCloseCallback != null)
+                                     {
+                                         Platform.runLater(onCloseCallback);
+                                     }
+                                 });
     }
 }

@@ -13,7 +13,13 @@ import javafx.stage.Stage;
 import java.util.Optional;
 import java.util.Random;
 
-public class NumberGame extends AbstractGame
+/**
+ * The Number Game implementation.
+ *
+ * @author colecampbell
+ * @version 1.0
+ */
+public final class NumberGame extends AbstractGame
 {
     private static final int SQUARES_WIDE     = 4;
     private static final int SQUARES_TALL     = 5;
@@ -26,7 +32,8 @@ public class NumberGame extends AbstractGame
     private static final int ARRAY_CONVERSION = 5;
     private static final int EMPTY_SPOT       = -1;
     private static final int INDEXING         = 1;
-
+    private static final int HEIGHT           = 500;
+    private static final int WIDTH            = 500;
 
     private final Button[][] buttons = new Button[SQUARES_WIDE][SQUARES_TALL];
     private       Label      statusLabel;
@@ -47,11 +54,12 @@ public class NumberGame extends AbstractGame
 
     private void setupUI()
     {
-        final VBox root = new VBox(10);
+        final VBox root;
+        root = new VBox(10);
         root.setAlignment(Pos.CENTER);
 
-        // Create the grid of buttons
-        final GridPane gridPane = new GridPane();
+        final GridPane gridPane;
+        gridPane = new GridPane();
         gridPane.setAlignment(Pos.CENTER);
         gridPane.setHgap(10);
         gridPane.setVgap(10);
@@ -69,21 +77,19 @@ public class NumberGame extends AbstractGame
             }
         }
 
-        // Status label
         statusLabel = new Label("Click Start to begin!");
         statusLabel.setAlignment(Pos.CENTER);
 
-        // Start button
-        final Button startButton = new Button("Start Game");
+        final Button startButton;
+        startButton = new Button("Start Game");
         startButton.setOnAction(event -> startGame());
 
-        // Add components to the root
         root.getChildren().addAll(statusLabel, gridPane, startButton);
 
-        // Set up the scene
-        final Scene scene = new Scene(root, 500, 500);
-        primaryStage.setTitle("Number Game");
+        final Scene scene;
+        scene = new Scene(root, HEIGHT, WIDTH);
         primaryStage.setScene(scene);
+        primaryStage.setTitle("Number Game");
         primaryStage.show();
     }
 
@@ -94,45 +100,49 @@ public class NumberGame extends AbstractGame
     public void startGame()
     {
         resetGame();
-        gameActive      = true;
-        totalPlacements = NOTHING; // Reset the total placements counter
+        gameActive = true;
+        this.setTotalPlacements(NOTHING);
+
         for (int i = 0; i < SQUARES_WIDE; i++)
         {
             for (int j = 0; j < SQUARES_TALL; j++)
             {
-                buttons[i][j].setText("[ ]"); // Clear button text
+                buttons[i][j].setText("[ ]");
             }
         }
-        currentNumber = random.nextInt(UPPER_BOUND) + LOWER_BOUND;
-        statusLabel.setText("Place the number: " + currentNumber);
+        this.setCurrentNumber(random.nextInt(UPPER_BOUND) + LOWER_BOUND);
+        statusLabel.setText("Place the number: " + this.getCurrentNumber());
     }
 
     private void placeNumber(final int row, final int col)
     {
-        if (!gameActive) return; // Do nothing if the game is over
-
-        if (numbers[row * ARRAY_CONVERSION + col] == EMPTY_SPOT && currentNumber != EMPTY_SPOT)
+        if (!gameActive)
         {
-            // Check if the number can be placed in ascending order
+            return;
+        }
+
+        if (this.getNumberAtArrayIndex(row * ARRAY_CONVERSION + col) == EMPTY_SPOT &&
+            this.getCurrentNumber() != EMPTY_SPOT)
+        {
             if (canPlaceNumber(row, col))
             {
-                numbers[row * ARRAY_CONVERSION + col] = currentNumber;
-                buttons[row][col].setText(String.valueOf(currentNumber));
-                totalPlacements++;
+                this.setNumberAtArrayIndex(row * ARRAY_CONVERSION + col, this.getCurrentNumber());
+                buttons[row][col].setText(String.valueOf(this.getCurrentNumber()));
+                this.incrementTotalPlacements();
 
-                if (totalPlacements == MAX_PLACEMENTS)
+                if (this.getTotalPlacements() == MAX_PLACEMENTS)
                 {
-                    endGame(true); // All numbers placed in order
+                    endGame(true);
                 }
                 else
                 {
-                    currentNumber = random.nextInt(UPPER_BOUND) + LOWER_BOUND;
-                    statusLabel.setText("Place the number: " + currentNumber);
+                    this.setCurrentNumber(random.nextInt(UPPER_BOUND) + LOWER_BOUND);
+                    statusLabel.setText("Place the number: " + this.getCurrentNumber());
                 }
             }
             else
             {
-                endGame(false); // Cannot place the number in ascending order
+                endGame(false);
             }
         }
     }
@@ -140,25 +150,26 @@ public class NumberGame extends AbstractGame
     private boolean canPlaceNumber(final int row, final int col)
     {
         int index = row * ARRAY_CONVERSION + col;
-        // Check the previous and next numbers to ensure ascending order
-        if (index > FIRST_SPOT && numbers[index - INDEXING] != EMPTY_SPOT && currentNumber < numbers[index - INDEXING])
+        if (index > FIRST_SPOT && this.getNumberAtArrayIndex(index - INDEXING) != EMPTY_SPOT
+            && this.getCurrentNumber() < this.getNumberAtArrayIndex(index - INDEXING))
         {
-            return false; // Cannot place a smaller number after a larger one
+            return false;
         }
-        if (index < LAST_SPOT && numbers[index + INDEXING] != EMPTY_SPOT && currentNumber > numbers[index + INDEXING])
+        if (index < LAST_SPOT && this.getNumberAtArrayIndex(index + INDEXING) != EMPTY_SPOT
+            && this.getCurrentNumber() > this.getNumberAtArrayIndex(index + INDEXING))
         {
-            return false; // Cannot place a larger number before a smaller one
+            return false;
         }
         return true;
     }
 
     private void endGame(final boolean won)
     {
-        gameActive = false; // Stop the game
-        gamesPlayed++;
+        gameActive = false;
+        this.incrementGamesPlayed();
         if (won)
         {
-            gamesWon++;
+            this.incrementGamesWon();
             statusLabel.setText("Congratulations! You won!");
         }
         else
@@ -167,25 +178,24 @@ public class NumberGame extends AbstractGame
         }
         updateScore();
 
-        // Ask the user if they want to try again or quit
-        final Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        final Alert alert;
+        alert = new Alert(Alert.AlertType.CONFIRMATION);
         alert.setTitle("Game Over");
         alert.setHeaderText(null);
         alert.setContentText(won ? "You won! Would you like to play again?" :
                              "You lost! Would you like to try again?");
 
-        final ButtonType tryAgainButton = new ButtonType("Try Again");
-        final ButtonType quitButton     = new ButtonType("Quit");
-        alert.getButtonTypes().setAll(tryAgainButton, quitButton);
+        alert.getButtonTypes().setAll(ButtonType.YES, ButtonType.NO);
 
-        final Optional<ButtonType> result = alert.showAndWait();
-        if (result.isPresent() && result.get() == tryAgainButton)
+        final Optional<ButtonType> result;
+        result = alert.showAndWait();
+        if (result.isPresent() && result.get() == ButtonType.YES)
         {
-            startGame(); // Restart the game
+            startGame();
         }
         else
         {
-            primaryStage.close(); // Close the game window
+            primaryStage.close();
         }
     }
 }
