@@ -49,9 +49,6 @@ public final class TwistedWordleTest
     void setUp()
     {
         game = new TwistedWordle();
-
-        game.setPlayers(new Player("TestP1"), new Player("TestP2"));
-        game.setCurrentPlayer(game.getPlayer1()); // Ensure consistent starting state
     }
 
     /**

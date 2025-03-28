@@ -563,41 +563,8 @@ public final class TwistedWordle
         popupStage.showAndWait();
     }
 
-    // Getters and setters
-    public Player getCurrentPlayer()
-    {
-        return currentPlayer;
-    }
-
-    public Player getPlayer1()
-    {
-        return player1;
-    }
-
-    public Player getPlayer2()
-    {
-        return player2;
-    }
-
-    public void setCurrentPlayer(final Player player)
-    {
-        this.currentPlayer = player;
-    }
-
-    public void setPlayers(final Player player1,
-                           final Player player2)
-    {
-        this.player1 = player1;
-        this.player2 = player2;
-    }
-
     public List<String> getWordBatch()
     {
         return wordBatch;
-    }
-
-    public String getTargetWord()
-    {
-        return targetWord;
     }
 }
