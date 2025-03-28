@@ -8,7 +8,7 @@ import java.util.HashMap;
  * @author colecampbell
  * @version 1.0
  */
-public class World
+public final class World
 {
     public static final HashMap<String, Country> worldMap = new HashMap<>();
 }

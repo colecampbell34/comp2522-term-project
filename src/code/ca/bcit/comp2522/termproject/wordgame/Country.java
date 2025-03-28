@@ -7,8 +7,10 @@ package ca.bcit.comp2522.termproject.wordgame;
  * @author colecampbell
  * @version 1.0
  */
-public class Country
+public final class Country
 {
+    private static final int NOTHING = 0;
+
     private final String   name;
     private final String   capitalCityName;
     private final String[] facts;
@@ -24,14 +26,41 @@ public class Country
                    final String capitalCityName,
                    final String[] facts)
     {
+        validateName(name);
+        validateCapitalCityName(capitalCityName);
+        validateFacts(facts);
+
         this.name            = name;
         this.capitalCityName = capitalCityName;
         this.facts           = facts;
     }
 
+    private void validateName(final String name)
+    {
+        if (name == null || name.isBlank())
+        {
+            throw new IllegalArgumentException("Bad name");
+        }
+    }
+
+    private void validateCapitalCityName(final String capitalCityName)
+    {
+        if (capitalCityName == null || capitalCityName.isBlank())
+        {
+            throw new IllegalArgumentException(("Bad capital city name"));
+        }
+    }
+
+    private void validateFacts(final String[] facts)
+    {
+        if (facts.length == NOTHING)
+        {
+            throw new IllegalArgumentException("Bad facts array");
+        }
+    }
+
     /**
      * Accessor for the country name.
-     *
      * @return the country name
      */
     public String getName()
@@ -41,7 +70,6 @@ public class Country
 
     /**
      * Accessor for the countries capital.
-     *
      * @return the capital city name
      */
     public String getCapitalCityName()
@@ -51,7 +79,6 @@ public class Country
 
     /**
      * Accessor for one random fact.
-     *
      * @param index the random index for the fact
      * @return the fact
      */

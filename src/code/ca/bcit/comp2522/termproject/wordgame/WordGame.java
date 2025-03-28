@@ -12,7 +12,7 @@ import java.util.*;
  * @author colecampbell
  * @version 1.0
  */
-public class WordGame
+public final class WordGame
 {
     private static final int    NOTHING           = 0;
     private static final int    GUESSES_PER_ROUND = 10;
@@ -30,6 +30,9 @@ public class WordGame
     private static final int    SECOND_TRY        = 1;
     private static final int    MAX_GUESSES       = 2;
     private static final String SCORE_FILE        = "score.txt";
+    private static final char   FIRST_FILE        = 'a';
+    private static final char   EMPTY_FILE        = 'w';
+    private static final char   LAST_FILE         = 'z';
 
     private static int gamesPlayed;
     private static int correctFirstAttempts;
@@ -59,11 +62,11 @@ public class WordGame
      */
     private static void loadWorldData()
     {
-        char fileName = 'a';
+        char fileName = FIRST_FILE;
 
-        while (fileName <= 'z')
+        while (fileName <= LAST_FILE)
         {
-            if (fileName == 'w')
+            if (fileName == EMPTY_FILE)
             {
                 fileName += CHAR_OFFSET;
             }
@@ -93,10 +96,10 @@ public class WordGame
                     World.worldMap.put(name, new Country(name, capitalCityName, facts));
                 }
                 fileScanner.close();
-            } catch (FileNotFoundException e)
+            } catch (final FileNotFoundException e)
             {
                 System.err.println("Error opening file: " + fileName);
-            } catch (Exception e)
+            } catch (final Exception e)
             {
                 System.err.println("Error processing file: " + fileName + " - " + e.getMessage());
             }

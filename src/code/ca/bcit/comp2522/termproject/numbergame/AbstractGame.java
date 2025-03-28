@@ -59,10 +59,6 @@ public abstract class AbstractGame implements GameInterface
                 gamesPlayed,
                 gamesWon,
                 totalPlacements);
-
-//        System.out.println("--- Score Report ---");
-//        System.out.println(scoreMessage); // Print to console for debugging
-//        System.out.println("--------------------");
         showScoreDialog(scoreMessage);
     }
 

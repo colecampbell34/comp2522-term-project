@@ -1,59 +1,95 @@
 package ca.bcit.comp2522.termproject.numbergame;
 
-import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 
 /**
- * Launches the UI for the number game.
+ * Provides a static method to launch the Number Game UI on the JavaFX Application Thread.
+ * Manages the lifecycle of the game's Stage.
  *
  * @author colecampbell
  * @version 1.0
  */
-public final class NumberGameMain extends Application
+public final class NumberGameMain
 {
-    private static Stage    currentStage;
-    private static Runnable onCloseCallback;
+
+    // Keep track of the currently open stage for this specific game
+    // This helps prevent accidental multiple openings if desired, or manage focus.
+    private static Stage currentNumberGameStage;
 
     /**
-     * Launches the game.
-     * @param callback the runnable object
+     * Launches a new Number Game window safely on the JavaFX Application Thread.
+     * If an instance is already open, it brings it to the front.
+     *
+     * @param onClose A Runnable to execute *after* the launched game Stage has been closed/hidden.
+     *                This is crucial for signaling the waiting main thread.
      */
-    public static void launchGame(final Runnable callback)
+    public static void launchGame(final Runnable onClose)
     {
-        onCloseCallback = callback;
+        // Ensure all UI creation and manipulation happens on the JavaFX Application Thread.
         Platform.runLater(() ->
                           {
                               try
                               {
-                                  if (currentStage != null)
+                                  if (currentNumberGameStage != null && currentNumberGameStage.isShowing())
                                   {
-                                      currentStage.close();
+                                      currentNumberGameStage.toFront();
+                                      return; // Don't create a new one if already showing
                                   }
-                                  currentStage = new Stage();
-                                  new NumberGameMain().start(currentStage);
+
+                                  final Stage stage = new Stage();
+                                  currentNumberGameStage = stage;
+
+                                  // Set the title for the window
+                                  stage.setTitle("Number Sorting Game");
+
+                                  stage.setOnHidden((WindowEvent event) ->
+                                                    {
+                                                        System.out.println("Number Game Stage hidden/closed event triggered.");
+                                                        // Nullify the reference now that the stage is closed
+                                                        if (currentNumberGameStage == stage)
+                                                        { // Check if it's the stage we think it is
+                                                            currentNumberGameStage = null;
+                                                        }
+                                                        // Execute the callback provided by the caller (e.g., latch.countDown())
+                                                        // Run this *after* cleanup, potentially also on Platform.runLater if it modifies FX state
+                                                        if (onClose != null)
+                                                        {
+                                                            // Running the callback directly is usually fine if it just signals another thread (like latch)
+                                                            onClose.run();
+                                                            System.out.println("onClose callback executed for Number Game.");
+                                                        }
+                                                    });
+
+                                  // Instantiate the actual game UI, passing the stage it should use.
+                                  // The NumberGame constructor should set up the scene and potentially show the stage.
+                                  new NumberGame(stage);
+
+                                  stage.toFront(); // Bring the new window to the front
+
                               } catch (final Exception e)
                               {
+                                  System.err.println("CRITICAL: Failed to launch Number Game on JavaFX Thread!");
                                   e.printStackTrace();
+
+                                  if (onClose != null)
+                                  {
+                                      System.err.println("Executing onClose callback due to launch failure.");
+                                      // Ensure callback runs on FX thread if it modifies FX state, otherwise direct call is fine for latch.
+                                      onClose.run();
+                                  }
+                                  // Clean up stage if partially created
+                                  if (currentNumberGameStage != null && !currentNumberGameStage.isShowing())
+                                  {
+                                      currentNumberGameStage = null;
+                                  }
                               }
                           });
     }
 
-    /**
-     * Starts the UI.
-     * @param primaryStage the stage
-     */
-    @Override
-    public void start(final Stage primaryStage)
+    // Private constructor to prevent instantiation of this utility class
+    private NumberGameMain()
     {
-        final NumberGame game;
-        game = new NumberGame(primaryStage);
-        primaryStage.setOnHidden(e ->
-                                 {
-                                     if (onCloseCallback != null)
-                                     {
-                                         Platform.runLater(onCloseCallback);
-                                     }
-                                 });
     }
 }

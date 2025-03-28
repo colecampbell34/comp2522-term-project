@@ -1,5 +1,6 @@
 package ca.bcit.comp2522.termproject.numbergame;
 
+import javafx.application.Platform;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
@@ -10,46 +11,52 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.Random;
 
 /**
- * The Number Game implementation.
+ * The Number Game implementation. Sets up and manages the game UI and logic.
  *
  * @author colecampbell
  * @version 1.0
  */
 public final class NumberGame extends AbstractGame
 {
-    private static final int SQUARES_WIDE     = 4;
-    private static final int SQUARES_TALL     = 5;
-    private static final int NOTHING          = 0;
-    private static final int UPPER_BOUND      = 1000;
-    private static final int LOWER_BOUND      = 1;
-    private static final int MAX_PLACEMENTS   = 20;
-    private static final int FIRST_SPOT       = 1;
-    private static final int LAST_SPOT        = 19;
-    private static final int ARRAY_CONVERSION = 5;
-    private static final int EMPTY_SPOT       = -1;
-    private static final int INDEXING         = 1;
-    private static final int HEIGHT           = 500;
-    private static final int WIDTH            = 500;
 
-    private final Button[][] buttons = new Button[SQUARES_WIDE][SQUARES_TALL];
+    private static final int SQUARES_WIDE   = 5;
+    private static final int SQUARES_TALL   = 4;
+    private static final int NOTHING        = 0;
+    private static final int UPPER_BOUND    = 1000;
+    private static final int LOWER_BOUND    = 1;
+    private static final int MAX_PLACEMENTS = SQUARES_WIDE * SQUARES_TALL;
+    private static final int EMPTY_SPOT     = -1;
+    private static final int HEIGHT         = 500;
+    private static final int WIDTH          = 500;
+    private static final int OFFSET         = 1;
+
+    private final Button[][] buttons   = new Button[SQUARES_TALL][SQUARES_WIDE];
     private       Label      statusLabel;
-    private final Random     random  = new Random();
-    private final Stage      primaryStage;
+    private final Random     random    = new Random();
+    private final Stage      gameStage;
     private       boolean    gameActive;
+    private final int[]      gameBoard = new int[MAX_PLACEMENTS];
 
     /**
-     * Constructs a NumberGame object.
+     * Constructs a NumberGame object and sets up its UI on the provided Stage.
      *
-     * @param primaryStage the stage
+     * @param stage The JavaFX Stage on which this game will be displayed.
      */
-    public NumberGame(final Stage primaryStage)
+    public NumberGame(final Stage stage)
     {
-        this.primaryStage = primaryStage;
-        setupUI();
+        if (stage == null)
+        {
+            throw new IllegalArgumentException("Stage cannot be null");
+        }
+        this.gameStage = stage;
+        resetLogicOnly();
+        setupUI(); // Build the UI components
+        this.gameStage.show();
     }
 
     private void setupUI()
@@ -64,16 +71,18 @@ public final class NumberGame extends AbstractGame
         gridPane.setHgap(10);
         gridPane.setVgap(10);
 
-        for (int i = 0; i < SQUARES_WIDE; i++)
+        for (int row = 0; row < SQUARES_TALL; row++)
         {
-            for (int j = 0; j < SQUARES_TALL; j++)
+            for (int col = 0; col < SQUARES_WIDE; col++)
             {
-                buttons[i][j] = new Button();
-                buttons[i][j].setPrefSize(60, 60);
-                int finalI = i;
-                int finalJ = j;
-                buttons[i][j].setOnAction(event -> placeNumber(finalI, finalJ));
-                gridPane.add(buttons[i][j], j, i);
+                buttons[row][col] = new Button();
+                buttons[row][col].setPrefSize(60, 60);
+
+                final int finalRow = row;
+                final int finalCol = col;
+
+                buttons[row][col].setOnAction(event -> handleGridButtonClick(finalRow, finalCol));
+                gridPane.add(buttons[row][col], col, row);
             }
         }
 
@@ -87,101 +96,181 @@ public final class NumberGame extends AbstractGame
         root.getChildren().addAll(statusLabel, gridPane, startButton);
 
         final Scene scene;
-        scene = new Scene(root, HEIGHT, WIDTH);
-        primaryStage.setScene(scene);
-        primaryStage.setTitle("Number Game");
-        primaryStage.show();
+        scene = new Scene(root, WIDTH, HEIGHT);
+        gameStage.setScene(scene);
     }
 
     /**
-     * Starts the game.
+     * Starts or restarts the game logic and UI.
      */
     @Override
     public void startGame()
     {
-        resetGame();
+        System.out.println("Starting new Number Game round.");
+        resetLogicOnly();
+        resetUI(); // Set initial button text here
         gameActive = true;
-        this.setTotalPlacements(NOTHING);
-
-        for (int i = 0; i < SQUARES_WIDE; i++)
-        {
-            for (int j = 0; j < SQUARES_TALL; j++)
-            {
-                buttons[i][j].setText("[ ]");
-            }
-        }
-        this.setCurrentNumber(random.nextInt(UPPER_BOUND) + LOWER_BOUND);
-        statusLabel.setText("Place the number: " + this.getCurrentNumber());
+        setTotalPlacements(NOTHING);
+        generateNextNumber(); // Generate first number
     }
 
-    private void placeNumber(final int row, final int col)
+    /**
+     * Resets the game board logic array.
+     */
+    private void resetLogicOnly()
+    {
+        Arrays.fill(gameBoard, EMPTY_SPOT);
+        setCurrentNumber(EMPTY_SPOT);
+    }
+
+    /**
+     * Resets the UI elements to their initial state.
+     */
+    private void resetUI()
+    {
+        for (int row = 0; row < SQUARES_TALL; row++)
+        {
+            for (int col = 0; col < SQUARES_WIDE; col++)
+            {
+                buttons[row][col].setText("[ ]"); // Set initial empty text
+                buttons[row][col].setDisable(false);
+            }
+        }
+        statusLabel.setText("Game started! Place the first number.");
+    }
+
+    /**
+     * Generates the next number to be placed and updates the status label.
+     */
+    private void generateNextNumber()
+    {
+        int nextNum = random.nextInt(UPPER_BOUND - LOWER_BOUND + OFFSET) + LOWER_BOUND;
+        setCurrentNumber(nextNum);
+        statusLabel.setText("Place the number: " + getCurrentNumber());
+    }
+
+    /**
+     * Handles clicks on the grid buttons. Renamed from placeNumber/handleButtonClick
+     */
+    private void handleGridButtonClick(final int row, final int col)
     {
         if (!gameActive)
         {
             return;
         }
 
-        if (this.getNumberAtArrayIndex(row * ARRAY_CONVERSION + col) == EMPTY_SPOT &&
-            this.getCurrentNumber() != EMPTY_SPOT)
-        {
-            if (canPlaceNumber(row, col))
-            {
-                this.setNumberAtArrayIndex(row * ARRAY_CONVERSION + col, this.getCurrentNumber());
-                buttons[row][col].setText(String.valueOf(this.getCurrentNumber()));
-                this.incrementTotalPlacements();
+        int index = row * SQUARES_WIDE + col;
 
-                if (this.getTotalPlacements() == MAX_PLACEMENTS)
-                {
-                    endGame(true);
-                }
-                else
-                {
-                    this.setCurrentNumber(random.nextInt(UPPER_BOUND) + LOWER_BOUND);
-                    statusLabel.setText("Place the number: " + this.getCurrentNumber());
-                }
+        if (index < NOTHING || index >= MAX_PLACEMENTS)
+        {
+            System.err.println("Error: Invalid index calculated: " + index + " for row=" + row + ", col=" + col);
+            return;
+        }
+
+        if (gameBoard[index] != EMPTY_SPOT)
+        {
+            statusLabel.setText("Spot already taken!"); // Optional feedback
+            return;
+        }
+
+        int numToPlace = getCurrentNumber();
+        if (numToPlace == EMPTY_SPOT)
+        {
+            return;
+        }
+
+
+        if (canPlaceNumber(index, numToPlace))
+        {
+            gameBoard[index] = numToPlace;
+            buttons[row][col].setText(String.valueOf(numToPlace));
+
+            incrementTotalPlacements();
+
+            // Check for win condition
+            if (getTotalPlacements() == MAX_PLACEMENTS)
+            {
+                endGame(true); // Player won
             }
             else
             {
-                endGame(false);
+                generateNextNumber();
             }
-        }
-    }
-
-    private boolean canPlaceNumber(final int row, final int col)
-    {
-        int index = row * ARRAY_CONVERSION + col;
-        if (index > FIRST_SPOT && this.getNumberAtArrayIndex(index - INDEXING) != EMPTY_SPOT
-            && this.getCurrentNumber() < this.getNumberAtArrayIndex(index - INDEXING))
-        {
-            return false;
-        }
-        if (index < LAST_SPOT && this.getNumberAtArrayIndex(index + INDEXING) != EMPTY_SPOT
-            && this.getCurrentNumber() > this.getNumberAtArrayIndex(index + INDEXING))
-        {
-            return false;
-        }
-        return true;
-    }
-
-    private void endGame(final boolean won)
-    {
-        gameActive = false;
-        this.incrementGamesPlayed();
-        if (won)
-        {
-            this.incrementGamesWon();
-            statusLabel.setText("Congratulations! You won!");
         }
         else
         {
-            statusLabel.setText("You lost! It's impossible to place the next number.");
+            // Cannot place the number legally - Player loses
+            endGame(false);
+        }
+    }
+
+    /**
+     * Checks if a number can be legally placed at the given 1D index.
+     * Numbers must be placed in increasing order across the 1D array.
+     *
+     * @param index  The 1D array index where placement is attempted.
+     * @param number The number to place.
+     * @return true if placement is legal, false otherwise.
+     */
+    // Simplified check based on 1D array ordering
+    private boolean canPlaceNumber(final int index, final int number)
+    {
+
+        // Check number to the left (index - 1) if it exists and isn't empty
+        if (index > NOTHING && gameBoard[index - OFFSET] != EMPTY_SPOT &&
+            number < gameBoard[index - OFFSET])
+        {
+            statusLabel.setText("Lost! Cannot place " + number); // Loss message
+            return false;
+        }
+
+        // Check number to the right (index + 1) if it exists and isn't empty
+        if (index < MAX_PLACEMENTS - OFFSET && gameBoard[index + OFFSET] != EMPTY_SPOT &&
+            number > gameBoard[index + OFFSET])
+        {
+            statusLabel.setText("Lost! Cannot place " + number); // Loss message
+            return false;
+        }
+
+        // Placement is valid according to neighbours
+        return true;
+    }
+
+
+    /**
+     * Ends the current game round, updates score, and prompts for replay using original Alert.
+     *
+     * @param won true if the player won, false otherwise.
+     */
+    private void endGame(final boolean won)
+    {
+        gameActive = false;
+        incrementGamesPlayed();
+
+        String headerText; // Use header for main result
+
+        if (won)
+        {
+            incrementGamesWon();
+            headerText = "Congratulations! You won!";
+            statusLabel.setText("You won!");
+        }
+        else
+        {
+            // If lost, canPlaceNumber or other logic should have set statusLabel
+            headerText = statusLabel.getText(); // Use the specific loss reason if available
+            if (headerText == null ||
+                !headerText.startsWith("Lost!"))
+            {
+                headerText = "You lost! It's impossible to place the next number."; // Default loss
+            }
         }
         updateScore();
 
         final Alert alert;
         alert = new Alert(Alert.AlertType.CONFIRMATION);
         alert.setTitle("Game Over");
-        alert.setHeaderText(null);
+        alert.setHeaderText(headerText);
         alert.setContentText(won ? "You won! Would you like to play again?" :
                              "You lost! Would you like to try again?");
 
@@ -189,13 +278,55 @@ public final class NumberGame extends AbstractGame
 
         final Optional<ButtonType> result;
         result = alert.showAndWait();
-        if (result.isPresent() && result.get() == ButtonType.YES)
+
+        if (result.isPresent() &&
+            result.get() == ButtonType.YES)
         {
             startGame();
         }
         else
         {
-            primaryStage.close();
+            closeGameWindow();
         }
+    }
+
+    /**
+     * Safely closes the game's Stage.
+     */
+    private void closeGameWindow()
+    {
+        System.out.println("Closing the Number Game window.");
+        if (gameStage != null)
+        {
+            gameStage.close();
+        }
+        else
+        {
+            System.err.println("Error: Game stage reference was null. Cannot close window.");
+        }
+    }
+
+    /**
+     * Utility to show a simple information dialog.
+     */
+    private void showInfoAlert(final String title,
+                               final String message)
+    {
+        if (!Platform.isFxApplicationThread())
+        {
+            Platform.runLater(() -> showInfoAlert(title, message));
+            return;
+        }
+        final Alert infoAlert;
+        infoAlert = new Alert(Alert.AlertType.INFORMATION);
+        infoAlert.setTitle(title);
+        infoAlert.setHeaderText(null);
+        infoAlert.setContentText(message);
+
+        if (gameStage != null && gameStage.isShowing())
+        {
+            infoAlert.initOwner(gameStage);
+        }
+        infoAlert.showAndWait();
     }
 }
