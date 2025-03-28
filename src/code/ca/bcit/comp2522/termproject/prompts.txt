@@ -1,23 +1,89 @@
-"can you generate a wordle game for me in java, using simple javafx" was my first prompt
-from here i looked things over and slowly asked for improvements, building up to a multiplayer wordle game.
-i would usually ask the ai to reference the comp2522 curriculum and only use things available there.
-after about 5 solid iterations i was left with the base for a multiplayer wordle game that i felt was viable to
-use and build off of.
-after all the ai work, i had to go in and find all of the uses from each lecture, and add some that were missed,
-for example there was nothing from lecture 6 used, so i made the player class an inner class.
-after adding all of my own things, changing the style to suit the classes best practices, and thoroughly testing,
-i then used a different ai and asked it to proofread and look for any errors in the code.
-it was able to find some problems and helped me fix them, which showed me the importance of cross referencing.
+Developing my COMP 2522 term project—a multiplayer Wordle-style game using Java and JavaFX—was a
+fascinating mix of hands-on coding and AI-assisted development. When I first started, my approach was
+pretty straightforward: "Generate a Wordle game for me in Java using simple JavaFX." That was the spark
+that set off an iterative, back-and-forth process where AI became both a guide and a collaborator, though
+definitely not a perfect one. This reflection dives into that journey—the benefits, the frustrations, and
+the lessons learned along the way.
 
-the upsides:
-- saves an unbelievable amount of time
-- spots minor bugs that i would have missed
-- comes up with ways to use certain criteria and mix it into my game
-- can give me multiple iterations of code to see which version i like best
-- can reference websites and textbooks instantly
 
-the downsides:
-- can make lots of mistakes
-- hard to deal with sometimes because i have to re-explain everything multiple times
-- some models of chatgpt are better than others, and i get limited access to the better models with the free version
-- default code style does not align with our classes best practices
+One of the toughest parts of any coding project is getting past the blank page. Having AI generate an initial
+structure gave me something concrete to build on, which saved time and removed that initial mental roadblock.
+The first attempt from the AI was functional but basic—just a simple Wordle game without any advanced features.
+But that was enough to get going. From there, it became an iterative process where I would tweak the AI's
+output, refine the game logic, and ask for improvements or added complexity.
+
+
+The AI was great for quickly generating boilerplate code, such as setting up JavaFX components or handling
+basic game logic. But when it came to structuring the project properly or making the game multiplayer, I had
+to step in with a lot of manual adjustments. The AI didn’t inherently understand the scope of my COMP 2522
+course, so I had to keep guiding it to use concepts from our curriculum—like generics, concurrency, and
+specific design patterns.
+
+
+Using AI for this project wasn’t just a matter of copying and pasting code. It was more like having a
+brainstorming partner who could throw out ideas quickly but didn’t always get things right. Some AI
+suggestions were spot-on, while others needed significant rewrites. A key example was when I asked for
+help with concurrency. The AI suggested a solution that worked but used libraries and techniques beyond
+what we covered in class. I had to rework it to ensure it met the course’s expectations.
+
+
+Another challenge was style and formatting. AI-generated code didn’t always follow best practices or our
+course standards. I spent a good amount of time refactoring—adding final where needed, improving variable
+names, and writing proper Javadoc comments. While this extra effort was a bit tedious, it helped reinforce
+my understanding of Java best practices.
+
+
+AI was useful in debugging, but not foolproof. It caught some minor syntax errors and logic inconsistencies,
+but it also introduced new bugs. One of the biggest takeaways was realizing that AI can confidently generate
+incorrect solutions. At one point, I tried using a different AI model to review the first model’s code, and
+it caught issues that the first one had completely missed. This cross-referencing method turned out to be a
+surprisingly effective way to catch subtle mistakes.
+
+One of the biggest downsides was AI’s short-term memory. It struggled to remember past instructions, meaning
+I often had to re-explain details or remind it of previous choices. This led to some frustrating loops where
+I had to carefully phrase prompts to get the AI to stay consistent.
+
+
+What Worked Well:
+
+Speed & Efficiency – AI significantly reduced development time by handling repetitive tasks and quickly
+generating working prototypes.
+
+Idea Generation – When I was stuck, AI provided multiple implementation ideas, helping me compare different
+approaches before settling on the best one.
+
+Quick Reference Guide – Instead of digging through documentation, I could ask AI about JavaFX functions
+or concurrency patterns and get instant responses.
+
+Minor Debugging Help – It spotted small errors like typos and potential NullPointerException scenarios.
+
+
+What Didn’t Work So Well:
+
+Accuracy Issues – AI sometimes generated incorrect, overly complex, or inefficient solutions that needed
+significant revisions.
+
+Context Loss – It struggled to retain information across multiple prompts, requiring me to re-explain
+things frequently.
+
+Coding Style Mismatches – AI-generated code didn’t always follow best practices or our course’s specific
+style guidelines, requiring extra cleanup.
+
+Over-Reliance Risk – If I wasn’t careful, I could’ve accepted AI’s solutions without fully understanding
+them. Staying engaged and critically evaluating the code was essential.
+
+
+Final Thoughts
+
+This project reinforced that AI is a powerful tool but not a replacement for a developer’s expertise.
+It works best when combined with human oversight, careful prompting, and a willingness to refine and
+debug its output. Using AI definitely made the development process faster and more dynamic, but it
+also required me to be extra vigilant in reviewing, testing, and adapting the generated code to fit
+the project requirements.
+
+The biggest lesson? AI is like a highly efficient but unreliable assistant. It can help brainstorm,
+speed up repetitive coding tasks, and provide useful insights, but ultimately, the developer is responsible
+for ensuring everything works correctly and meets the necessary standards.
+
+Would I use AI for coding again? Absolutely. But I’d go in knowing that while it’s a great accelerator,
+it still requires a hands-on, critical approach to get the best results.

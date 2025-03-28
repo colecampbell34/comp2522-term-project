@@ -1,9 +1,9 @@
 lesson 1: classes, constructors in Player class, static constants used
 lesson 2: exception handling when loading words from file
 lesson 3: substitution used with currentPlayer being either player1 or player2
-lesson 4: twisted world implements the scorable interface
+lesson 4: twisted world implements the Scorable interface
 lesson 5: collections with List<String>
-lesson 6: TODO
+lesson 6: anonymous inner class in loadWordsAsync, generics like List<String> used for wordBatch
 lesson 7: lambda used with javaFX and streams used when loading words from file
 lesson 8: path classes used to read word file
 lesson 9: entire game uses javaFX
