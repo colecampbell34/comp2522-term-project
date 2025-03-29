@@ -46,19 +46,14 @@ public final class NumberGameMain
 
                                   stage.setOnHidden((WindowEvent event) ->
                                                     {
-                                                        System.out.println("Number Game Stage hidden/closed event triggered.");
-                                                        // Nullify the reference now that the stage is closed
                                                         if (currentNumberGameStage == stage)
-                                                        { // Check if it's the stage we think it is
+                                                        {
                                                             currentNumberGameStage = null;
                                                         }
                                                         // Execute the callback provided by the caller (e.g., latch.countDown())
-                                                        // Run this *after* cleanup, potentially also on Platform.runLater if it modifies FX state
                                                         if (onClose != null)
                                                         {
-                                                            // Running the callback directly is usually fine if it just signals another thread (like latch)
                                                             onClose.run();
-                                                            System.out.println("onClose callback executed for Number Game.");
                                                         }
                                                     });
 

@@ -1,6 +1,5 @@
 package ca.bcit.comp2522.termproject.numbergame;
 
-import javafx.application.Platform;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
@@ -304,29 +303,5 @@ public final class NumberGame extends AbstractGame
         {
             System.err.println("Error: Game stage reference was null. Cannot close window.");
         }
-    }
-
-    /**
-     * Utility to show a simple information dialog.
-     */
-    private void showInfoAlert(final String title,
-                               final String message)
-    {
-        if (!Platform.isFxApplicationThread())
-        {
-            Platform.runLater(() -> showInfoAlert(title, message));
-            return;
-        }
-        final Alert infoAlert;
-        infoAlert = new Alert(Alert.AlertType.INFORMATION);
-        infoAlert.setTitle(title);
-        infoAlert.setHeaderText(null);
-        infoAlert.setContentText(message);
-
-        if (gameStage != null && gameStage.isShowing())
-        {
-            infoAlert.initOwner(gameStage);
-        }
-        infoAlert.showAndWait();
     }
 }
