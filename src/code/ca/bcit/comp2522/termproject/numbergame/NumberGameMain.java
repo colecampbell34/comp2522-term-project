@@ -13,9 +13,6 @@ import javafx.stage.WindowEvent;
  */
 public final class NumberGameMain
 {
-
-    // Keep track of the currently open stage for this specific game
-    // This helps prevent accidental multiple openings if desired, or manage focus.
     private static Stage currentNumberGameStage;
 
     /**
@@ -81,10 +78,5 @@ public final class NumberGameMain
                                   }
                               }
                           });
-    }
-
-    // Private constructor to prevent instantiation of this utility class
-    private NumberGameMain()
-    {
     }
 }

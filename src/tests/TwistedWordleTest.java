@@ -1,23 +1,19 @@
-import ca.bcit.comp2522.termproject.twistedwordle.TwistedWordle;
-import ca.bcit.comp2522.termproject.twistedwordle.Player;
-import org.junit.jupiter.api.BeforeEach;
+import ca.bcit.comp2522.termproject.twistedwordle.TwistedWordle; // Adjust package if needed
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import javafx.embed.swing.JFXPanel;
-
 import java.io.IOException;
+import java.lang.reflect.Method; // Import reflection
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
+import java.util.Set;
 
 /**
- * Unit tests for the TwistedWordle game logic (version extending Application).
- * Adheres to specific coding style. testSwitchPlayer removed due to private field access.
+ * Unit tests for the TwistedWordle game logic.
+ * Focuses on testable components: score calculation and the word loading helper method.
  *
  * @author colecampbell
  * @version 1.0
@@ -25,133 +21,105 @@ import java.util.concurrent.TimeUnit;
 public final class TwistedWordleTest
 {
 
-    private TwistedWordle game;
-
-    // Initializes the JavaFX Toolkit required for Platform.runLater etc.
-    // Needs to run once before any JavaFX related test.
-    static
-    {
-        try
-        {
-            final JFXPanel panel = new JFXPanel(); // Add final
-            System.out.println("JavaFX Toolkit Initialized for Testing.");
-        } catch (final Exception e)
-        {
-            System.err.println("Failed to initialize JavaFX Toolkit for testing: " + e.getMessage());
-            fail("JavaFX Toolkit could not be initialized.", e);
-        }
-    }
-
-    /**
-     * Sets up the objects before each test.
-     */
-    @BeforeEach
-    void setUp()
-    {
-        game = new TwistedWordle();
-    }
-
-    /**
-     * Tests the score calculation logic based on attempts left and time.
-     */
     @Test
     void testCalculateScore()
     {
-        // Formula from source: 50 + (attemptsLeft * 10) + timeLeft
-        final int score1 = game.calculateScore(3, 20); // 100
-        assertEquals(100, score1, "Score with 3 attempts left, 20s");
+        final TwistedWordle scoreCalculator;
+        scoreCalculator = new TwistedWordle();
 
-        final int score2 = game.calculateScore(0, 5); // 55
-        assertEquals(55, score2, "Score with 0 attempts left, 5s");
-
-        final int score3 = game.calculateScore(5, 0); // 100
-        assertEquals(100, score3, "Score with 5 attempts left, 0s");
-
-        final int score4 = game.calculateScore(1, -10); // 50
-        assertEquals(50, score4, "Score with negative time");
+        // Formula: 50 + (attemptsLeftBeforeGuess * 10) + max(0, timeLeft)
+        assertEquals(100, scoreCalculator.calculateScore(3, 20), "Score: 3 attempts left, 20s");
+        assertEquals(55, scoreCalculator.calculateScore(0, 5), "Score: 0 attempts left, 5s");
+        assertEquals(100, scoreCalculator.calculateScore(5, 0), "Score: 5 attempts left, 0s");
+        assertEquals(60, scoreCalculator.calculateScore(1, -10), "Score: 1 attempt left, negative time");
+        assertEquals(140, scoreCalculator.calculateScore(6, 30), "Score: 6 attempts left, 30s");
     }
 
-    /**
-     * Tests the asynchronous loading of words from a file, verifying successful
-     * loading and correct filtering based only on word length.
-     *
-     * @param tempDir A temporary directory provided by JUnit for test files.
-     * @throws InterruptedException if the waiting thread is interrupted.
-     * @throws IOException          if file I/O fails during test setup.
-     */
     @Test
-    void testLoadWordsAsyncSuccess(@TempDir final Path tempDir) throws InterruptedException,
-                                                                       IOException
+    void testLoadAndProcessWordsSuccess(@TempDir final Path tempDir) throws Exception
     {
         // Setup: Create a temporary word file
         final Path wordFile;
-        wordFile = tempDir.resolve("testwords.txt");
-        final List<String> wordsToWrite;
-        wordsToWrite = List.of(
-                "APPLE", "TABLE", "CHAIR", "SPACE", "LOWER", "TOOLONG", "SHRT", "DIG1T", "tests", "  BLA  ");
+        wordFile = tempDir.resolve("testwords_load_success.txt");
+
+        final List<String> wordsToWrite = List.of(
+                "apple", // Lowercase
+                " TABLE ", // Needs trim
+                "CHAIR", // Valid
+                "space", // Lowercase
+                "LOWER", // Valid
+                "TOOLONG", // Invalid length
+                "SHRT", // Invalid length
+                " DIG1T ", // Needs trim, Length 5 (digits allowed by filter)
+                " tests", // Needs trim, Length 5
+                "VALID", // Valid
+                "again", // Lowercase
+                "WORDS"); // Valid
         Files.write(wordFile, wordsToWrite);
         System.out.println("Test word file created at: " + wordFile.toAbsolutePath());
 
-        final CountDownLatch latch;
-        latch = new CountDownLatch(1);
+        // Action: Call the static helper method using reflection (since it's private)
+        final Method method;
+        method = TwistedWordle.class.getDeclaredMethod("loadAndProcessWords", String.class);
+        method.setAccessible(true); // Make the private method accessible
+        @SuppressWarnings("unchecked")
 
-        // Action: Call loadWordsAsync with the Runnable callback
-        game.loadWordsAsync(wordFile.toString(), latch::countDown);
+        final Set<String> loadedWords = (Set<String>) method.invoke(null, wordFile.toString());
 
-        // Verification: Wait for the async operation
-        final boolean completed = latch.await(5, TimeUnit.SECONDS);
-        assertTrue(completed, "Asynchronous word loading timed out.");
+        // Verification: Check the returned set
+        assertNotNull(loadedWords, "Loaded word set should not be null.");
 
-        // Check results after onComplete has run
-        final List<String> loadedWords;
-        loadedWords = game.getWordBatch();
-        assertNotNull(loadedWords, "Word batch should not be null after successful load.");
-        assertFalse(loadedWords.isEmpty(), "Word batch should not be empty after successful load.");
+        // Verify content based on filtering logic (length 5, trimmed, uppercase)
+        final Set<String> expectedWords = Set.of(
+                "APPLE", "TABLE", "CHAIR", "SPACE", "LOWER",
+                "DIG1T", "TESTS", "VALID", "AGAIN", "WORDS");
+        final int expectedCount = 10;
 
-        // Verify content based on simple length == 5 filter from the source code
-        final int expectedWordCount = 7; // APPLE, TABLE, CHAIR, SPACE, LOWER, DIG1T, tests
-        assertEquals(expectedWordCount, loadedWords.size(), "Should contain exactly " + expectedWordCount + " words of length 5.");
-        assertTrue(loadedWords.contains("APPLE"), "Should contain APPLE");
-        assertTrue(loadedWords.contains("TABLE"), "Should contain TABLE");
-        assertTrue(loadedWords.contains("CHAIR"), "Should contain CHAIR");
-        assertTrue(loadedWords.contains("SPACE"), "Should contain SPACE");
-        assertTrue(loadedWords.contains("LOWER"), "Should contain LOWER");
-        assertTrue(loadedWords.contains("DIG1T"), "Should contain DIG1T (length 5)");
-        assertTrue(loadedWords.contains("tests"), "Should contain tests");
+        assertEquals(expectedCount, loadedWords.size(),
+                     "Should contain exactly " + expectedCount + " valid words.");
+        assertEquals(expectedWords, loadedWords, "The loaded set should match the expected set.");
 
-        assertFalse(loadedWords.contains("TOOLONG"), "Should filter out TOOLONG.");
-        assertFalse(loadedWords.contains("SHRT"), "Should filter out SHRT.");
-        assertFalse(loadedWords.contains("  BLA  "), "Should filter out '  BLA  '.");
+        // Optional: Individual checks if needed
+        assertTrue(loadedWords.contains("APPLE"));
+        assertTrue(loadedWords.contains("TABLE"));
+        assertFalse(loadedWords.contains("TOOLONG"));
+        assertFalse(loadedWords.contains("SHRT"));
     }
 
+
     /**
-     * Tests the asynchronous loading of words when the specified file does not exist.
-     * Verifies that the completion callback is still called but the word list remains null.
+     * Tests the static loadAndProcessWords helper method when the file does not exist.
+     * Verifies that an IOException is thrown.
      *
-     * @param tempDir A temporary directory provided by JUnit for test files.
-     * @throws InterruptedException if the waiting thread is interrupted.
+     * @param tempDir A temporary directory for test files.
      */
     @Test
-    void testLoadWordsAsyncFailure(@TempDir final Path tempDir) throws InterruptedException
+    void testLoadAndProcessWordsFileNotExist(@TempDir final Path tempDir) throws Exception
     {
-        // Setup: Use a non-existent file path
+        // Setup: Path to a non-existent file
         final Path nonExistentFile;
         nonExistentFile = tempDir.resolve("non_existent_words.txt");
+        System.out.println("Testing load failure with non-existent file: " + nonExistentFile.toAbsolutePath());
 
-        final CountDownLatch latch;
-        latch = new CountDownLatch(1);
+        // Action & Verification: Expect IOException when calling the helper method
+        final Method method;
+        method = TwistedWordle.class.getDeclaredMethod("loadAndProcessWords", String.class);
+        method.setAccessible(true);
 
-        // Action: Call loadWordsAsync with the non-existent file
-        game.loadWordsAsync(nonExistentFile.toString(), latch::countDown);
+        // Use assertThrows to check for the specific exception from the *invocation*
+        final Exception exception;
+        exception = assertThrows(Exception.class, () ->
+        {
+            method.invoke(null, nonExistentFile.toString());
+        }, "Calling loadAndProcessWords with non-existent file should throw");
 
-        // Verification: Wait for the onComplete callback
-        final boolean completed;
-        completed = latch.await(5, TimeUnit.SECONDS);
-        assertTrue(completed, "Asynchronous word loading (failure case) timed out.");
+        // Check that the cause of the InvocationTargetException is the expected IOException
+        final Throwable cause;
+        cause = exception.getCause();
+        assertNotNull(cause, "Invocation should have a cause");
+        assertInstanceOf(IOException.class, cause, "Cause should be IOException");
+        assertTrue(cause.getMessage().contains("Word file not found"), "IOException message should indicate file not found.");
 
-        // Check results after onComplete has run
-        final List<String> loadedWords;
-        loadedWords = game.getWordBatch();
-        assertNull(loadedWords, "Word batch should be null after a failed load.");
+        System.out.println("Correctly caught expected exception: " + cause.getMessage());
     }
 }

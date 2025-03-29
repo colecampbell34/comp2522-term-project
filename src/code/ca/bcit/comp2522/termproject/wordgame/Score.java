@@ -101,7 +101,7 @@ public class Score
                 Correct First Attempts: %d
                 Correct Second Attempts: %d
                 Incorrect Attempts: %d
-                Total Score: %d points
+                Score: %d points
                 """,
                 dateTime.format(formatter),
                 gamesPlayed,

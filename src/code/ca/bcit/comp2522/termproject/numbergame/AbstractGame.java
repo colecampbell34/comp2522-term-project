@@ -159,5 +159,4 @@ public abstract class AbstractGame implements GameInterface
     {
         gamesWon++;
     }
-
 }

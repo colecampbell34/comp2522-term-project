@@ -1,8 +1,8 @@
 package ca.bcit.comp2522.termproject;
 
 import ca.bcit.comp2522.termproject.numbergame.NumberGameMain;
-import ca.bcit.comp2522.termproject.twistedwordle.TwistedWordle; // Use the launcher class
-import ca.bcit.comp2522.termproject.wordgame.WordGame; // Assuming console game
+import ca.bcit.comp2522.termproject.twistedwordle.TwistedWordle;
+import ca.bcit.comp2522.termproject.wordgame.WordGame;
 import javafx.application.Platform;
 
 import java.io.IOException;
@@ -15,11 +15,10 @@ import java.util.concurrent.CountDownLatch;
  * Ensures JavaFX platform is managed correctly for reusable stages.
  *
  * @author colecampbell
- * @version 1.2 - Refined JavaFX launching and waiting
+ * @version 1.0
  */
 public class Main
 {
-
     private static final Scanner input               = new Scanner(System.in);
     private static final char    WORD_GAME           = 'W';
     private static final char    NUMBER_GAME         = 'N';
@@ -34,7 +33,6 @@ public class Main
      */
     public static void main(final String[] args)
     {
-        // Initialize JavaFX toolkit ONCE at the very beginning.
         initializeJavaFX();
 
         System.out.println("Welcome to Cole's comp2522 term project!");
@@ -83,10 +81,9 @@ public class Main
                 input.nextLine(); // Consume the enter press
             }
         }
-        // Optional: Explicit exit if Platform.exit() doesn't terminate JVM (e.g., non-daemon threads still running)
-        // System.exit(0);
     }
 
+    /* Initializes the UI for all the games. */
     private static void initializeJavaFX()
     {
         try
@@ -100,7 +97,6 @@ public class Main
             // IMPORTANT: Prevent JavaFX from exiting when the last window is closed.
             // This allows us to open new game windows later.
             Platform.setImplicitExit(false);
-            System.out.println("JavaFX implicit exit disabled.");
 
         } catch (final IllegalStateException e)
         {
@@ -110,17 +106,16 @@ public class Main
             if (Platform.isImplicitExit())
             {
                 Platform.setImplicitExit(false);
-                System.out.println("Ensured JavaFX implicit exit is disabled.");
             }
         } catch (final Exception e)
         {
-            System.err.println("CRITICAL: Failed to initialize JavaFX Platform!");
+            System.err.println("Failed to initialize JavaFX Platform!");
             e.printStackTrace();
-            // Exit if JavaFX can't start, as GUI games won't work.
             System.exit(1);
         }
     }
 
+    /* Prints the game selection menu. */
     private static void printMenu()
     {
         System.out.println("\n--- Main Menu ---");
@@ -132,7 +127,7 @@ public class Main
         System.out.print("Your choice: ");
     }
 
-    // Assuming WordGame is a console-based game or handles its own lifecycle
+    /* Launches the word game. */
     private static void playWordGame()
     {
         try
@@ -142,11 +137,11 @@ public class Main
             System.out.println("Word game finished.");
         } catch (final IOException e)
         {
-            System.err.println("Error running Word game: " + e.getMessage());
             e.printStackTrace();
         }
     }
 
+    /* Launches the number game. */
     private static void playNumberGame()
     {
         System.out.println("\nLaunching Number Game...");
@@ -156,47 +151,51 @@ public class Main
 
         try
         {
-            // Call the static launcher, passing the action to perform on close (counting down the latch)
             NumberGameMain.launchGame(gameCloseLatch::countDown);
 
-            // Wait here until gameCloseLatch.countDown() is called from the JavaFX thread.
             gameCloseLatch.await();
 
         } catch (final InterruptedException e)
         {
             System.err.println("Main thread interrupted while waiting for Number Game.");
-            Thread.currentThread().interrupt(); // Restore interrupt status
+            Thread.currentThread().interrupt();
         } catch (final Exception e)
         {
-            System.err.println("An error occurred while launching or waiting for the Number Game:");
             e.printStackTrace();
         }
     }
 
+    /* Launches the wordle game. */
     private static void playTwistedWordleGame()
     {
-        System.out.println("\nLaunching Twisted Wordle Game...");
+        System.out.println("\nSetting up Twisted Wordle Game...");
 
-        // Latch to make the main thread wait until the game window is closed.
-        final CountDownLatch gameCloseLatch;
-        gameCloseLatch = new CountDownLatch(1);
+        boolean setupSuccessful;
+        setupSuccessful = TwistedWordle.setupGameFromConsole();
 
-        try
+        if (setupSuccessful)
         {
-            // Call the static launcher, passing the action to perform on close
-            TwistedWordle.launchGame(gameCloseLatch::countDown);
+            final CountDownLatch gameCloseLatch;
+            gameCloseLatch = new CountDownLatch(1);
 
-            // Wait here until gameCloseLatch.countDown() is called from the JavaFX thread.
-            gameCloseLatch.await();
+            try
+            {
+                TwistedWordle.launchGame(gameCloseLatch::countDown);
+                gameCloseLatch.await();
 
-        } catch (final InterruptedException e)
-        {
-            System.err.println("Main thread interrupted while waiting for Twisted Wordle.");
-            Thread.currentThread().interrupt(); // Restore interrupt status
-        } catch (final Exception e)
-        {
-            System.err.println("An error occurred while launching or waiting for Twisted Wordle:");
-            e.printStackTrace();
+            } catch (final InterruptedException e)
+            {
+                System.err.println("Main thread interrupted while waiting for Twisted Wordle.");
+                Thread.currentThread().interrupt();
+            } catch (final Exception e)
+            {
+                e.printStackTrace();
+            }
         }
+        else
+        {
+            System.err.println("Failed to set up Twisted Wordle. Cannot launch game.");
+        }
+        System.out.println("Returning to main menu...");
     }
 }

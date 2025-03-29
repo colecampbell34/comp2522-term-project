@@ -10,8 +10,9 @@ public final class PlayerFactory
 {
     /**
      * Constructs a player within the factory.
-     * @param name
-     * @return
+     *
+     * @param name the name of the player
+     * @return the new player object
      */
     public static Player createPlayer(final String name)
     {

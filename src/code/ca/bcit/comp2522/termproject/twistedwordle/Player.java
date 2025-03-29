@@ -26,6 +26,7 @@ public final class Player
 
     /**
      * Gets the name of the player.
+     *
      * @return the name
      */
     public String getName()
@@ -35,6 +36,7 @@ public final class Player
 
     /**
      * Gets the score for the player.
+     *
      * @return the score
      */
     public int getScore()
@@ -44,6 +46,7 @@ public final class Player
 
     /**
      * Adds to the players score
+     *
      * @param points the points to add
      */
     public void addScore(final int points)

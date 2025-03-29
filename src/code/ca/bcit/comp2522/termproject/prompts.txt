@@ -1,14 +1,13 @@
-Developing my COMP 2522 term project—a multiplayer Wordle-style game using Java and JavaFX—was a
-fascinating mix of hands-on coding and AI-assisted development. When I first started, my approach was
-pretty straightforward: "Generate a Wordle game for me in Java using simple JavaFX." That was the spark
-that set off an iterative, back-and-forth process where AI became both a guide and a collaborator, though
-definitely not a perfect one. This reflection dives into that journey—the benefits, the frustrations, and
-the lessons learned along the way.
+Developing my COMP 2522 term project was a mix of hands-on coding and AI-assisted development.
+When I first started, my approach was pretty straightforward: "Generate a Wordle game for me in Java using
+simple JavaFX." That was what set off a back-and-forth process where AI became both a guide
+and a collaborator, though definitely not a perfect one. This reflection dives into that journey—the benefits,
+the frustrations, and the lessons learned along the way.
 
 
 One of the toughest parts of any coding project is getting past the blank page. Having AI generate an initial
 structure gave me something concrete to build on, which saved time and removed that initial mental roadblock.
-The first attempt from the AI was functional but basic—just a simple Wordle game without any advanced features.
+The first attempt from the AI was functional but basic, and just a simple Wordle game without any advanced features.
 But that was enough to get going. From there, it became an iterative process where I would tweak the AI's
 output, refine the game logic, and ask for improvements or added complexity.
 
@@ -16,8 +15,7 @@ output, refine the game logic, and ask for improvements or added complexity.
 The AI was great for quickly generating boilerplate code, such as setting up JavaFX components or handling
 basic game logic. But when it came to structuring the project properly or making the game multiplayer, I had
 to step in with a lot of manual adjustments. The AI didn’t inherently understand the scope of my COMP 2522
-course, so I had to keep guiding it to use concepts from our curriculum—like generics, concurrency, and
-specific design patterns.
+course, so I had to keep guiding it to use concepts from our curriculum.
 
 
 Using AI for this project wasn’t just a matter of copying and pasting code. It was more like having a
@@ -39,6 +37,7 @@ incorrect solutions. At one point, I tried using a different AI model to review 
 it caught issues that the first one had completely missed. This cross-referencing method turned out to be a
 surprisingly effective way to catch subtle mistakes.
 
+
 One of the biggest downsides was AI’s short-term memory. It struggled to remember past instructions, meaning
 I often had to re-explain details or remind it of previous choices. This led to some frustrating loops where
 I had to carefully phrase prompts to get the AI to stay consistent.
@@ -52,8 +51,7 @@ generating working prototypes.
 Idea Generation – When I was stuck, AI provided multiple implementation ideas, helping me compare different
 approaches before settling on the best one.
 
-Quick Reference Guide – Instead of digging through documentation, I could ask AI about JavaFX functions
-or concurrency patterns and get instant responses.
+Quick Reference Guide – Instead of digging through documentation, I could ask AI and get instant responses.
 
 Minor Debugging Help – It spotted small errors like typos and potential NullPointerException scenarios.
 
@@ -81,7 +79,7 @@ debug its output. Using AI definitely made the development process faster and mo
 also required me to be extra vigilant in reviewing, testing, and adapting the generated code to fit
 the project requirements.
 
-The biggest lesson? AI is like a highly efficient but unreliable assistant. It can help brainstorm,
+The biggest lesson was that AI is like a highly efficient but unreliable assistant. It can help brainstorm,
 speed up repetitive coding tasks, and provide useful insights, but ultimately, the developer is responsible
 for ensuring everything works correctly and meets the necessary standards.
 
