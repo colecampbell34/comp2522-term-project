@@ -152,16 +152,31 @@ public class Score
         {
             while (scanner.hasNextLine())
             {
-                String line = scanner.nextLine();
+                final String line;
+                line = scanner.nextLine();
+
+                // make sure we read in the proper order
                 if (line.startsWith("Date and Time: "))
                 {
-                    LocalDateTime dateTime              = LocalDateTime.parse(line.substring(ACTUAL_DATE_STRING_INDEX), formatter);
-                    int           gamesPlayed           = Integer.parseInt(scanner.nextLine().split(": ")[DATA_HALF]);
-                    int           correctFirstAttempts  = Integer.parseInt(scanner.nextLine().split(": ")[DATA_HALF]);
-                    int           correctSecondAttempts = Integer.parseInt(scanner.nextLine().split(": ")[DATA_HALF]);
-                    int           incorrectAttempts     = Integer.parseInt(scanner.nextLine().split(": ")[DATA_HALF]);
-                    scanner.nextLine(); // Skip score line
-                    scores.add(new Score(dateTime, gamesPlayed, correctFirstAttempts, correctSecondAttempts, incorrectAttempts));
+                    final LocalDateTime dateTime;
+                    final int           gamesPlayed;
+                    final int           correctFirstAttempts;
+                    final int           correctSecondAttempts;
+                    final int           incorrectAttempts;
+
+                    dateTime              = LocalDateTime.parse(line.substring(ACTUAL_DATE_STRING_INDEX), formatter);
+                    gamesPlayed           = Integer.parseInt(scanner.nextLine().split(": ")[DATA_HALF]);
+                    correctFirstAttempts  = Integer.parseInt(scanner.nextLine().split(": ")[DATA_HALF]);
+                    correctSecondAttempts = Integer.parseInt(scanner.nextLine().split(": ")[DATA_HALF]);
+                    incorrectAttempts     = Integer.parseInt(scanner.nextLine().split(": ")[DATA_HALF]);
+
+
+                    scanner.nextLine();
+                    scores.add(new Score(dateTime,
+                                         gamesPlayed,
+                                         correctFirstAttempts,
+                                         correctSecondAttempts,
+                                         incorrectAttempts));
                 }
             }
         }

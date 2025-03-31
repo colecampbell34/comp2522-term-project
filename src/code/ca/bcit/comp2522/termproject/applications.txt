@@ -7,6 +7,6 @@ lesson 6: anonymous inner class in startTimer, generics like List<String> used h
 lesson 7: streams/lambda used when loading words from file
 lesson 8: path classes used to read word file
 lesson 9: entire game uses javaFX
-lesson 10: concurrency used to load words asynchronously
+lesson 10: made a unit test for all the testable components of TwistedWordle
 lesson 11: factory design pattern used in PlayerFactory
-lesson 12: made a simple unit test for the calculateScore method
+lesson 12: concurrency used to load words asynchronously

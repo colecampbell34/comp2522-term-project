@@ -18,7 +18,7 @@ import java.util.Random;
  * The Number Game implementation. Sets up and manages the game UI and logic.
  *
  * @author colecampbell
- * @version 1.0
+ * @version 1.1 // Version updated to reflect changes
  */
 public final class NumberGame extends AbstractGame
 {
@@ -52,6 +52,7 @@ public final class NumberGame extends AbstractGame
         {
             throw new IllegalArgumentException("Stage cannot be null");
         }
+
         this.gameStage = stage;
         resetLogicOnly();
         setupUI(); // Build the UI components
@@ -80,7 +81,7 @@ public final class NumberGame extends AbstractGame
                 final int finalRow = row;
                 final int finalCol = col;
 
-                buttons[row][col].setOnAction(event -> handleGridButtonClick(finalRow, finalCol));
+                buttons[row][col].setOnAction(e -> handleGridButtonClick(finalRow, finalCol));
                 gridPane.add(buttons[row][col], col, row);
             }
         }
@@ -107,10 +108,21 @@ public final class NumberGame extends AbstractGame
     {
         System.out.println("Starting new Number Game round.");
         resetLogicOnly();
-        resetUI(); // Set initial button text here
-        gameActive = true;
+        resetUI(); // Set initial button text and enable buttons
         setTotalPlacements(NOTHING);
+        gameActive = true; // Set active before generating number
+
         generateNextNumber(); // Generate first number
+
+        // checking if the first number can be placed just in case
+        if (!canPlaceCurrentNumberAnywhere())
+        {
+            statusLabel.setText("Lost! Impossible to place first number " + getCurrentNumber());
+            disableAllButtons(); // Prevent clicks
+            endGame(false);
+            // gameActive is set to false within endGame
+        }
+        // If we get here, the game starts normally, statusLabel set by generateNextNumber
     }
 
     /**
@@ -132,7 +144,7 @@ public final class NumberGame extends AbstractGame
             for (int col = 0; col < SQUARES_WIDE; col++)
             {
                 buttons[row][col].setText("[ ]"); // Set initial empty text
-                buttons[row][col].setDisable(false);
+                buttons[row][col].setDisable(false); // Ensure buttons are enabled
             }
         }
         statusLabel.setText("Game started! Place the first number.");
@@ -143,44 +155,54 @@ public final class NumberGame extends AbstractGame
      */
     private void generateNextNumber()
     {
-        int nextNum = random.nextInt(UPPER_BOUND - LOWER_BOUND + OFFSET) + LOWER_BOUND;
+        // Only generate if the game is active (avoid issues if called after game ends)
+        if (!gameActive)
+        {
+            return;
+        }
+
+        final int nextNum;
+        nextNum = random.nextInt(UPPER_BOUND - LOWER_BOUND + OFFSET) + LOWER_BOUND;
+
         setCurrentNumber(nextNum);
         statusLabel.setText("Place the number: " + getCurrentNumber());
     }
 
     /**
-     * Handles clicks on the grid buttons. Renamed from placeNumber/handleButtonClick
+     * Handles clicks on the grid buttons.
      */
-    private void handleGridButtonClick(final int row, final int col)
+    private void handleGridButtonClick(final int row,
+                                       final int col)
     {
         if (!gameActive)
         {
             return;
         }
 
-        int index = row * SQUARES_WIDE + col;
+        final int index;
+        index = row * SQUARES_WIDE + col;
 
-        if (index < NOTHING || index >= MAX_PLACEMENTS)
+        if (index < NOTHING ||
+            index >= MAX_PLACEMENTS)
         {
-            System.err.println("Error: Invalid index calculated: " + index + " for row=" + row + ", col=" + col);
+            System.err.println("Error: Invalid index calculated: " + index +
+                               " for row=" + row +
+                               ", col=" + col);
             return;
         }
 
         if (gameBoard[index] != EMPTY_SPOT)
         {
-            statusLabel.setText("Spot already taken!"); // Optional feedback
+            statusLabel.setText("Spot already taken! Try again.");
             return;
         }
 
-        int numToPlace = getCurrentNumber();
-        if (numToPlace == EMPTY_SPOT)
-        {
-            return;
-        }
-
+        final int numToPlace;
+        numToPlace= getCurrentNumber();
 
         if (canPlaceNumber(index, numToPlace))
         {
+            // valid placement
             gameBoard[index] = numToPlace;
             buttons[row][col].setText(String.valueOf(numToPlace));
 
@@ -193,57 +215,111 @@ public final class NumberGame extends AbstractGame
             }
             else
             {
+                // Generate the next number
                 generateNextNumber();
+
+                if (gameActive && !canPlaceCurrentNumberAnywhere())
+                {
+                    statusLabel.setText("Lost! No valid spot for " + getCurrentNumber());
+                    disableAllButtons();
+                    endGame(false); // Player loses because no valid moves exist
+                }
             }
         }
         else
         {
-            // Cannot place the number legally - Player loses
-            endGame(false);
+            // The user clicked a spot where this number cannot
+            // legally go based on overall order.
+            statusLabel.setText("Lost! Placing " +
+                                numToPlace +
+                                " there is illegal.");
+            disableAllButtons();
+            endGame(false); // Player loses for making an incorrect placement
         }
     }
 
+
     /**
-     * Checks if a number can be legally placed at the given 1D index.
-     * Numbers must be placed in increasing order across the 1D array.
+     * Checks if a number can be legally placed at the given 1D index based on
+     * all other placed numbers. Numbers must maintain strictly increasing order
+     * across the flattened board (left-to-right, top-to-bottom).
      *
      * @param index  The 1D array index where placement is attempted.
      * @param number The number to place.
      * @return true if placement is legal, false otherwise.
      */
-    // Simplified check based on 1D array ordering
-    private boolean canPlaceNumber(final int index, final int number)
+    private boolean canPlaceNumber(final int index,
+                                   final int number)
     {
-
-        // Check number to the left (index - 1) if it exists and isn't empty
-        if (index > NOTHING && gameBoard[index - OFFSET] != EMPTY_SPOT &&
-            number < gameBoard[index - OFFSET])
+        // Check all numbers placed at indices BEFORE the target index
+        for (int i = 0; i < index; i++)
         {
-            statusLabel.setText("Lost! Cannot place " + number); // Loss message
-            return false;
+            if (gameBoard[i] != EMPTY_SPOT &&
+                number <= gameBoard[i])
+            {
+                // Found a number to the left that is >= the number we want to place
+                return false;
+            }
         }
 
-        // Check number to the right (index + 1) if it exists and isn't empty
-        if (index < MAX_PLACEMENTS - OFFSET && gameBoard[index + OFFSET] != EMPTY_SPOT &&
-            number > gameBoard[index + OFFSET])
+        // Check all numbers placed at indices AFTER the target index
+        for (int i = index + 1; i < MAX_PLACEMENTS; i++)
         {
-            statusLabel.setText("Lost! Cannot place " + number); // Loss message
-            return false;
+            if (gameBoard[i] != EMPTY_SPOT &&
+                number >= gameBoard[i])
+            {
+                // Found a number to the right that is <= the number we want to place
+                return false;
+            }
         }
 
-        // Placement is valid according to neighbours
+        // If we passed both checks, the placement is valid relative to all other numbers
         return true;
+    }
+
+    /**
+     * Checks if the current number (returned by getCurrentNumber()) can be legally
+     * placed in ANY remaining empty spot on the board.
+     *
+     * @return true if there is at least one valid spot, false otherwise.
+     */
+    private boolean canPlaceCurrentNumberAnywhere()
+    {
+        final int numToCheck;
+        numToCheck= getCurrentNumber();
+
+        for (int i = 0; i < MAX_PLACEMENTS; i++)
+        {
+            if (gameBoard[i] == EMPTY_SPOT)
+            {
+                // Found an empty spot. Check if numToCheck can legally go here.
+                if (canPlaceNumber(i, numToCheck))
+                {
+                    // Yes, found at least one valid spot. Game can continue.
+                    return true;
+                }
+            }
+        }
+
+        // Went through all spots, no empty spot allows placing numToCheck legally.
+        return false;
     }
 
 
     /**
-     * Ends the current game round, updates score, and prompts for replay using original Alert.
+     * Ends the current game round, updates score, disables buttons, and prompts for replay.
      *
      * @param won true if the player won, false otherwise.
      */
     private void endGame(final boolean won)
     {
-        gameActive = false;
+        if (!gameActive)
+        {
+            return; // Avoid multiple calls if already ended
+        }
+
+        gameActive = false; // Mark game as inactive first
+
         incrementGamesPlayed();
 
         String headerText; // Use header for main result
@@ -252,56 +328,78 @@ public final class NumberGame extends AbstractGame
         {
             incrementGamesWon();
             headerText = "Congratulations! You won!";
-            statusLabel.setText("You won!");
+            statusLabel.setText("You won!"); // Final status update
         }
         else
         {
-            // If lost, canPlaceNumber or other logic should have set statusLabel
-            headerText = statusLabel.getText(); // Use the specific loss reason if available
+            headerText = statusLabel.getText();
             if (headerText == null ||
-                !headerText.startsWith("Lost!"))
+                headerText.isEmpty() ||
+                headerText.startsWith("Place the number:"))
             {
-                headerText = "You lost! It's impossible to place the next number."; // Default loss
+                headerText = "You lost!";
+                statusLabel.setText("You lost!");
             }
         }
-        updateScore();
 
         final Alert alert;
         alert = new Alert(Alert.AlertType.CONFIRMATION);
+
         alert.setTitle("Game Over");
         alert.setHeaderText(headerText);
-        alert.setContentText(won ? "You won! Would you like to play again?" :
-                             "You lost! Would you like to try again?");
+        alert.setContentText(won ? "Excellent work! Would you like to play again?" :
+                             "Better luck next time! Would you like to try again?");
 
         alert.getButtonTypes().setAll(ButtonType.YES, ButtonType.NO);
 
         final Optional<ButtonType> result;
         result = alert.showAndWait();
 
+        updateScore();
+
         if (result.isPresent() &&
             result.get() == ButtonType.YES)
         {
-            startGame();
+            startGame(); // Restart the game
         }
         else
         {
-            closeGameWindow();
+            closeGameWindow(); // Close the application window
         }
     }
 
     /**
-     * Safely closes the game's Stage.
+     * Disables all grid buttons, typically used when the game ends unexpectedly.
+     */
+    private void disableAllButtons()
+    {
+        for (int r = 0; r < SQUARES_TALL; r++)
+        {
+            for (int c = 0; c < SQUARES_WIDE; c++)
+            {
+                if (buttons[r][c] != null)
+                {
+                    buttons[r][c].setDisable(true);
+                }
+            }
+        }
+    }
+
+
+    /**
+     * Safely closes the games Stage.
      */
     private void closeGameWindow()
     {
         System.out.println("Closing the Number Game window.");
+
         if (gameStage != null)
         {
             gameStage.close();
         }
         else
         {
-            System.err.println("Error: Game stage reference was null. Cannot close window.");
+            System.err.println("Error: Cannot close window.");
         }
     }
 }

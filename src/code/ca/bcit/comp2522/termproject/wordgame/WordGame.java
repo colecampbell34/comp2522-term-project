@@ -29,6 +29,7 @@ public final class WordGame
     private static final int    FIRST_TRY         = 0;
     private static final int    SECOND_TRY        = 1;
     private static final int    MAX_GUESSES       = 2;
+
     private static final String SCORE_FILE        = "score.txt";
     private static final char   FIRST_FILE        = 'a';
     private static final char   EMPTY_FILE        = 'w';
@@ -68,6 +69,7 @@ public final class WordGame
         {
             if (fileName == EMPTY_FILE)
             {
+                // skips over the 2 non-existent files
                 fileName += CHAR_OFFSET;
             }
 
@@ -205,8 +207,11 @@ public final class WordGame
 
         while (guesses < MAX_GUESSES)
         {
-            System.out.println("What country has the capital city of " + World.worldMap.get(key).getCapitalCityName() + "?");
-            String guess = input.nextLine();
+            System.out.println("What country has the capital city of " +
+                               World.worldMap.get(key).getCapitalCityName() + "?");
+
+            final String guess;
+            guess = input.nextLine();
 
             if (guess.equalsIgnoreCase(World.worldMap.get(key).getName()))
             {
@@ -235,8 +240,11 @@ public final class WordGame
 
         while (guesses < MAX_GUESSES)
         {
-            System.out.println("What is the capital city of " + World.worldMap.get(key).getName() + "?");
-            String guess = input.nextLine();
+            System.out.println("What is the capital city of " +
+                               World.worldMap.get(key).getName() + "?");
+
+            final String guess;
+            guess = input.nextLine();
 
             if (guess.equalsIgnoreCase(World.worldMap.get(key).getCapitalCityName()))
             {
@@ -269,8 +277,11 @@ public final class WordGame
 
         while (guesses < MAX_GUESSES)
         {
-            System.out.println("What country has this fact: " + World.worldMap.get(key).getFacts(randomFactIndex) + "?");
-            String guess = input.nextLine();
+            System.out.println("What country has this fact: " +
+                               World.worldMap.get(key).getFacts(randomFactIndex) + "?");
+
+            final String guess;
+            guess = input.nextLine();
 
             if (guess.equalsIgnoreCase(World.worldMap.get(key).getName()))
             {
@@ -310,7 +321,8 @@ public final class WordGame
 
         for (final Score score : scores)
         {
-            if (highScore == null || score.getAvgScore() > highScore.getAvgScore())
+            if (highScore == null ||
+                score.getAvgScore() > highScore.getAvgScore())
             {
                 highScore = score;
             }
@@ -321,6 +333,7 @@ public final class WordGame
         {
             System.out.printf("CONGRATULATIONS! You are the new high score with an average of %.2f ppg!\n",
                               latestScore.getAvgScore());
+
             if (highScore != null)
             {
                 System.out.printf("The previous high score was %.2f ppg on %s",

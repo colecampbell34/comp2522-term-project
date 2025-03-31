@@ -24,30 +24,31 @@ public final class NumberGameMain
      */
     public static void launchGame(final Runnable onClose)
     {
-        // Ensure all UI creation and manipulation happens on the JavaFX Application Thread.
         Platform.runLater(() ->
                           {
                               try
                               {
-                                  if (currentNumberGameStage != null && currentNumberGameStage.isShowing())
+                                  if (currentNumberGameStage != null &&
+                                      currentNumberGameStage.isShowing())
                                   {
                                       currentNumberGameStage.toFront();
-                                      return; // Don't create a new one if already showing
+                                      return;
                                   }
 
-                                  final Stage stage = new Stage();
+                                  final Stage stage;
+                                  stage = new Stage();
                                   currentNumberGameStage = stage;
 
                                   // Set the title for the window
-                                  stage.setTitle("Number Sorting Game");
+                                  stage.setTitle("Number Game");
 
-                                  stage.setOnHidden((WindowEvent event) ->
+                                  stage.setOnHidden((final WindowEvent event) ->
                                                     {
                                                         if (currentNumberGameStage == stage)
                                                         {
                                                             currentNumberGameStage = null;
                                                         }
-                                                        // Execute the callback provided by the caller (e.g., latch.countDown())
+
                                                         if (onClose != null)
                                                         {
                                                             onClose.run();
@@ -62,20 +63,8 @@ public final class NumberGameMain
 
                               } catch (final Exception e)
                               {
-                                  System.err.println("CRITICAL: Failed to launch Number Game on JavaFX Thread!");
                                   e.printStackTrace();
 
-                                  if (onClose != null)
-                                  {
-                                      System.err.println("Executing onClose callback due to launch failure.");
-                                      // Ensure callback runs on FX thread if it modifies FX state, otherwise direct call is fine for latch.
-                                      onClose.run();
-                                  }
-                                  // Clean up stage if partially created
-                                  if (currentNumberGameStage != null && !currentNumberGameStage.isShowing())
-                                  {
-                                      currentNumberGameStage = null;
-                                  }
                               }
                           });
     }

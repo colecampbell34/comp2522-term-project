@@ -38,16 +38,24 @@ public class Main
         System.out.println("Welcome to Cole's comp2522 term project!");
         System.out.println("----------------------------------------");
 
-        boolean keepRunning = true;
+        boolean keepRunning;
+        keepRunning = true;
+
         while (keepRunning)
         {
             printMenu();
-            final String line = input.nextLine().trim();
+
+            final String line;
+            line = input.nextLine().trim();
+
             if (line.isEmpty())
             {
+                // if the user didn't input anything, re-prompt
                 continue;
             }
-            char choice = line.toUpperCase().charAt(FIRST_INDEX); // Get first char
+
+            final char choice;
+            choice = line.toUpperCase().charAt(FIRST_INDEX); // Get first char
 
             switch (choice)
             {
@@ -71,11 +79,13 @@ public class Main
                     System.out.println("Goodbye!");
                     break;
                 default:
-                    System.out.println("Invalid choice '" + choice + "', please try again.");
+                    System.out.println("Invalid choice '" +
+                                       choice +
+                                       "', please try again.");
                     break;
             }
-            // Add a small pause or prompt before showing the menu again after a game
-            if (keepRunning && choice != QUIT)
+
+            if (keepRunning)
             {
                 System.out.println("\nPress Enter to return to the main menu...");
                 input.nextLine(); // Consume the enter press
@@ -146,6 +156,7 @@ public class Main
     {
         System.out.println("\nLaunching Number Game...");
 
+        // pause the main thread until the number game is done
         final CountDownLatch gameCloseLatch;
         gameCloseLatch = new CountDownLatch(1);
 
@@ -157,7 +168,6 @@ public class Main
 
         } catch (final InterruptedException e)
         {
-            System.err.println("Main thread interrupted while waiting for Number Game.");
             Thread.currentThread().interrupt();
         } catch (final Exception e)
         {
@@ -175,6 +185,7 @@ public class Main
 
         if (setupSuccessful)
         {
+            // pause the main thread until the wordle game is done
             final CountDownLatch gameCloseLatch;
             gameCloseLatch = new CountDownLatch(1);
 
@@ -185,7 +196,6 @@ public class Main
 
             } catch (final InterruptedException e)
             {
-                System.err.println("Main thread interrupted while waiting for Twisted Wordle.");
                 Thread.currentThread().interrupt();
             } catch (final Exception e)
             {
@@ -194,7 +204,7 @@ public class Main
         }
         else
         {
-            System.err.println("Failed to set up Twisted Wordle. Cannot launch game.");
+            System.err.println("Failed to set up Twisted Wordle.");
         }
         System.out.println("Returning to main menu...");
     }

@@ -50,22 +50,38 @@ public abstract class AbstractGame implements GameInterface
     public void updateScore()
     {
         final double averagePlacements;
-        averagePlacements = (gamesPlayed == NOTHING) ? NOTHING :
-                            (double) totalPlacements / gamesPlayed;
+
+        if (gamesPlayed == NOTHING)
+        {
+            averagePlacements = NOTHING;
+        }
+        else
+        {
+            averagePlacements = (double) totalPlacements / gamesPlayed;
+        }
+
 
         final String scoreMessage;
         scoreMessage = String.format(
-                "Stats for this session instance:\nGames Played: %d\nGames Won: %d\nPlacements in last game: %d",
+                "Stats for the last round:" +
+                "\nGames Played: %d" +
+                "\nGames Won: %d" +
+                "\nPlacements in last game: %d" +
+                "\nAverage placements: %.2f",
                 gamesPlayed,
                 gamesWon,
-                totalPlacements);
+                totalPlacements,
+                averagePlacements);
+
         showScoreDialog(scoreMessage);
     }
 
+    /* Displays the score for the user. */
     private void showScoreDialog(final String message)
     {
         final Alert alert;
         alert = new Alert(Alert.AlertType.INFORMATION);
+
         alert.setTitle("Score Report");
         alert.setHeaderText(null); // No header
         alert.setContentText(message);
@@ -100,30 +116,6 @@ public abstract class AbstractGame implements GameInterface
     protected int getCurrentNumber()
     {
         return this.currentNumber;
-    }
-
-    /**
-     * Retrieves the number stored at a specific index in the array.
-     *
-     * @param index the index to retrieve the number from
-     * @return the number at the specified index
-     * @throws ArrayIndexOutOfBoundsException if the index is out of bounds
-     */
-    protected int getNumberAtArrayIndex(final int index)
-    {
-        return numbers[index];
-    }
-
-    /**
-     * Sets a number at a specific index in the array.
-     *
-     * @param index  the index where the number should be set
-     * @param number the number to store at the specified index
-     * @throws ArrayIndexOutOfBoundsException if the index is out of bounds
-     */
-    protected void setNumberAtArrayIndex(final int index, final int number)
-    {
-        numbers[index] = number;
     }
 
     /**

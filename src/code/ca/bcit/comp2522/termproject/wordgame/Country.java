@@ -35,6 +35,7 @@ public final class Country
         this.facts           = facts;
     }
 
+    /* Validates the country name for null or blank. */
     private void validateName(final String name)
     {
         if (name == null || name.isBlank())
@@ -43,6 +44,7 @@ public final class Country
         }
     }
 
+    /* Validates the capital city name for null or blank. */
     private void validateCapitalCityName(final String capitalCityName)
     {
         if (capitalCityName == null || capitalCityName.isBlank())
@@ -51,6 +53,7 @@ public final class Country
         }
     }
 
+    /* Validates the facts array for empty. */
     private void validateFacts(final String[] facts)
     {
         if (facts.length == NOTHING)
