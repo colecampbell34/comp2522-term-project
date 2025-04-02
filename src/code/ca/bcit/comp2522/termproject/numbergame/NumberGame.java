@@ -90,10 +90,17 @@ public final class NumberGame extends AbstractGame
         statusLabel.setAlignment(Pos.CENTER);
 
         final Button startButton;
-        startButton = new Button("Start Game");
+        startButton = new Button("Start New Game");
         startButton.setOnAction(event -> startGame());
 
-        root.getChildren().addAll(statusLabel, gridPane, startButton);
+        final Button quitButton;
+        quitButton = new Button("Quit");
+        quitButton.setOnAction(event -> endGame(false));
+
+        root.getChildren().addAll(statusLabel,
+                                  gridPane,
+                                  startButton,
+                                  quitButton);
 
         final Scene scene;
         scene = new Scene(root, WIDTH, HEIGHT);
@@ -106,7 +113,6 @@ public final class NumberGame extends AbstractGame
     @Override
     public void startGame()
     {
-        System.out.println("Starting new Number Game round.");
         resetLogicOnly();
         resetUI(); // Set initial button text and enable buttons
         setTotalPlacements(NOTHING);
@@ -165,6 +171,8 @@ public final class NumberGame extends AbstractGame
         nextNum = random.nextInt(UPPER_BOUND - LOWER_BOUND + OFFSET) + LOWER_BOUND;
 
         setCurrentNumber(nextNum);
+
+        // display the next number to the user
         statusLabel.setText("Place the number: " + getCurrentNumber());
     }
 
@@ -179,17 +187,9 @@ public final class NumberGame extends AbstractGame
             return;
         }
 
+        // convert the index for a 1-D array to check values
         final int index;
         index = row * SQUARES_WIDE + col;
-
-        if (index < NOTHING ||
-            index >= MAX_PLACEMENTS)
-        {
-            System.err.println("Error: Invalid index calculated: " + index +
-                               " for row=" + row +
-                               ", col=" + col);
-            return;
-        }
 
         if (gameBoard[index] != EMPTY_SPOT)
         {
@@ -220,9 +220,10 @@ public final class NumberGame extends AbstractGame
 
                 if (gameActive && !canPlaceCurrentNumberAnywhere())
                 {
+                    // Player loses because no valid moves exist
                     statusLabel.setText("Lost! No valid spot for " + getCurrentNumber());
                     disableAllButtons();
-                    endGame(false); // Player loses because no valid moves exist
+                    endGame(false);
                 }
             }
         }
