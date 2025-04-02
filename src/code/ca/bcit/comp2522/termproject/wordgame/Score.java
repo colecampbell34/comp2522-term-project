@@ -19,6 +19,7 @@ public class Score
     private static final int               FIRST_TRY_MULTIPLIER     = 2;
     private static final int               ACTUAL_DATE_STRING_INDEX = 15;
     private static final int               DATA_HALF                = 1;
+    private static final int               NOTHING                  = 0;
 
     static
     {
@@ -47,13 +48,43 @@ public class Score
                  final int correctSecondAttempts,
                  final int incorrectAttempts)
     {
+        validateDateTime(dateTime);
+        validateNumber(gamesPlayed);
+        validateNumber(correctFirstAttempts);
+        validateNumber(correctSecondAttempts);
+        validateNumber(incorrectAttempts);
+
         this.dateTime              = dateTime;
         this.gamesPlayed           = gamesPlayed;
         this.correctFirstAttempts  = correctFirstAttempts;
         this.correctSecondAttempts = correctSecondAttempts;
         this.incorrectAttempts     = incorrectAttempts;
-        this.score                 = (correctFirstAttempts * FIRST_TRY_MULTIPLIER) +
-                                     correctSecondAttempts;
+
+        this.score = (correctFirstAttempts *
+                      FIRST_TRY_MULTIPLIER) +
+                     correctSecondAttempts;
+    }
+
+    /*
+     * Validates a date time object.
+     */
+    private static void validateDateTime(final LocalDateTime dateTime)
+    {
+        if (dateTime == null)
+        {
+            throw new IllegalArgumentException("DateTime object cannot be null");
+        }
+    }
+
+    /*
+     * Validates a number to check if it is positive.
+     */
+    private static void validateNumber(final int num)
+    {
+        if (num < NOTHING)
+        {
+            throw new IllegalArgumentException("Invalid number in constructor");
+        }
     }
 
     /**
@@ -119,7 +150,8 @@ public class Score
      * @throws IOException if an I/O error occurs
      */
     public static void appendScoreToFile(final Score score,
-                                         final String filePath) throws IOException
+                                         final String filePath)
+    throws IOException
     {
         try (final FileWriter writer = new FileWriter(filePath, true))
         {
@@ -134,7 +166,8 @@ public class Score
      * @return a list of Score objects
      * @throws IOException if an I/O error occurs
      */
-    public static List<Score> readScoresFromFile(final String filePath) throws IOException
+    public static List<Score> readScoresFromFile(final String filePath)
+    throws IOException
     {
         final List<Score> scores;
         final File        file;
@@ -164,7 +197,8 @@ public class Score
                     final int           correctSecondAttempts;
                     final int           incorrectAttempts;
 
-                    dateTime              = LocalDateTime.parse(line.substring(ACTUAL_DATE_STRING_INDEX), formatter);
+                    dateTime              = LocalDateTime.parse(line.substring(ACTUAL_DATE_STRING_INDEX),
+                                                                formatter);
                     gamesPlayed           = Integer.parseInt(scanner.nextLine().split(": ")[DATA_HALF]);
                     correctFirstAttempts  = Integer.parseInt(scanner.nextLine().split(": ")[DATA_HALF]);
                     correctSecondAttempts = Integer.parseInt(scanner.nextLine().split(": ")[DATA_HALF]);

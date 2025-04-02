@@ -9,4 +9,4 @@ lesson 8: path classes used to read word file
 lesson 9: entire game uses javaFX
 lesson 10: made a unit test for all the testable components of TwistedWordle
 lesson 11: factory design pattern used in PlayerFactory
-lesson 12: concurrency used to load words asynchronously
+lesson 12: concurrency used with Platform.runLater()

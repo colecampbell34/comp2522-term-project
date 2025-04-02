@@ -15,7 +15,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ScoreTest
 {
-
     private static final String            SCORE_FILE = "test_score.txt";
     private static final DateTimeFormatter formatter  = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 

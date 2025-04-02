@@ -33,7 +33,9 @@ import java.util.stream.Collectors;
 
 /**
  * Custom multiplayer wordle game. Words chosen via console before GUI starts.
- * Word loading is asynchronous, using a testable helper method for core logic.
+ * Words must be part of the text file in resources to be considered.
+ * Players have 6 guesses each round, scores are calculated based on
+ * time, remaining guesses and correct/incorrect.
  *
  * @author colecampbell
  * @version 1.0
@@ -88,110 +90,97 @@ public final class TwistedWordle
      */
     public static boolean setupGameFromConsole()
     {
-        final ExecutorService wordLoadExecutor;
-        wordLoadExecutor = Executors.newSingleThreadExecutor();
-
         final Scanner consoleScanner;
         consoleScanner = new Scanner(System.in);
 
         boolean success;
         success = false;
 
-        try
-        {
-            // callable object to load words synchronously
-            final Callable<Set<String>> loadTask = () ->
-            {
-                return loadAndProcessWords(WORD_FILE_PATH); // Call the helper
-            };
-
-            // future object for concurrency
-            final Future<Set<String>> futureWords;
-            futureWords = wordLoadExecutor.submit(loadTask);
-
-            try
-            {
-                staticWordSet = futureWords.get(); // Wait and get result
-            } catch (final ExecutionException e)
-            {
-                System.err.println("Error during asynchronous word loading");
-                return false;
-            } catch (final InterruptedException e)
-            {
-                System.err.println("Setup interrupted while loading words.");
-                Thread.currentThread().interrupt();
-                return false;
-            }
+        try {
+            staticWordSet = loadAndProcessWords(WORD_FILE_PATH);
 
             System.out.println("Loaded " +
                                staticWordSet.size() +
                                " valid words.");
 
-            if (staticWordSet == null ||
-                staticWordSet.isEmpty())
-            {
-                System.err.println("Word file processing failed or yielded no valid words.");
-                return false;
-            }
-
-            // begin prompting players for names and words
+            validateStaticWordSet(staticWordSet);
 
             System.out.print("Enter Player 1 Name: ");
             staticPlayer1Name = consoleScanner.nextLine().trim();
 
-            if (staticPlayer1Name.isEmpty())
-            {
-                staticPlayer1Name = "Player 1";
-            }
+            validatePlayerName(staticPlayer1Name);
 
             System.out.print("Enter Player 2 Name: ");
             staticPlayer2Name = consoleScanner.nextLine().trim();
 
-            if (staticPlayer2Name.isEmpty())
-            {
-                staticPlayer2Name = "Player 2";
-            }
+            validatePlayerName(staticPlayer2Name);
 
-            // player 1 chooses 3 words
-            System.out.println("\n--- " + staticPlayer1Name +
-                               ", choose " + TOTAL_ROUNDS +
-                               " words for " + staticPlayer2Name + " ---");
+            // Player 1 chooses words
+            System.out.println("\n--- " +
+                               staticPlayer1Name +
+                               ", choose " +
+                               TOTAL_ROUNDS +
+                               " words for " +
+                               staticPlayer2Name +
+                               " ---");
+            staticWordsForPlayer2 = getWordsFromConsole(staticPlayer1Name,
+                                                        consoleScanner);
+            validateWordsForPlayer(staticWordsForPlayer2);
 
-            staticWordsForPlayer2 = getWordsFromConsole(staticPlayer1Name, consoleScanner);
+            // Player 2 chooses words
+            System.out.println("\n--- " +
+                               staticPlayer2Name +
+                               ", choose " +
+                               TOTAL_ROUNDS +
+                               " words for " +
+                               staticPlayer1Name +
+                               " ---");
+            staticWordsForPlayer1 = getWordsFromConsole(staticPlayer2Name,
+                                                        consoleScanner);
+            validateWordsForPlayer(staticWordsForPlayer1);
 
-            if (staticWordsForPlayer2 == null)
-            {
-                return false;
-            }
-
-            // player 2 chooses 3 words
-            System.out.println("\n--- " + staticPlayer2Name +
-                               ", choose " + TOTAL_ROUNDS +
-                               " words for " + staticPlayer1Name + " ---");
-
-            staticWordsForPlayer1 = getWordsFromConsole(staticPlayer2Name, consoleScanner);
-
-            if (staticWordsForPlayer1 == null)
-            {
-                return false;
-            }
-
-            // words were loaded properly
             success = true;
 
-        } catch (final Exception e)
-        {
+        } catch (final Exception e) {
             e.printStackTrace();
-
-        } finally
-        {
-            if (wordLoadExecutor != null)
-            {
-                wordLoadExecutor.shutdown();
-            }
         }
 
         return success;
+    }
+
+    /*
+     * Validates a word set.
+     */
+    private static void validateStaticWordSet(final Set<String> staticWordSet)
+    {
+        if (staticWordSet == null ||
+            staticWordSet.isEmpty()) {
+            throw new IllegalArgumentException("Word set cannot be null");
+        }
+    }
+
+    /*
+     * Validates a player name.
+     */
+    private static void validatePlayerName(final String name)
+    {
+        if (name == null ||
+            name.isBlank())
+        {
+            throw new IllegalArgumentException("Name should not be null or blank");
+        }
+    }
+
+    /*
+     * Validates a word list.
+     */
+    private static void validateWordsForPlayer(final List<String> words)
+    {
+        if (words == null ||
+            words.size() != TOTAL_ROUNDS)
+        {
+            throw new IllegalStateException("Word list for player is invalid");
+        }
     }
 
     /**
@@ -205,27 +194,49 @@ public final class TwistedWordle
     public static Set<String> loadAndProcessWords(final String filename)
     throws IOException
     {
+        validateFileName(filename);
+
         final Path filePath;
         filePath = Paths.get(filename);
 
-        if (!Files.exists(filePath))
-        {
-            // file does not exist
-            throw new IOException("Word file not found: " +
-                                  filePath.toAbsolutePath());
-        }
+        validateFileExistence(filePath);
 
-        // return only the valid words
-        return Files.lines(filePath)
+        // return only the valid 5-letter words
+        return Files.readAllLines(filePath)
+                    .stream()
                     .map(String::trim)
-                    .filter(word -> word.length() == WORD_LENGTH) // Filter by length
+                    .filter(word -> word.length() == WORD_LENGTH)
                     .map(String::toUpperCase)
                     .collect(Collectors.toSet());
     }
 
+    /*
+     * Validates a file name.
+     */
+    private static void validateFileName(final String fileName)
+    {
+        if (fileName == null ||
+            fileName.isBlank())
+        {
+            throw new IllegalArgumentException("Invalid file name");
+        }
+    }
+
+    /*
+     * Validates that the file exists.
+     */
+    private static void validateFileExistence(final Path filePath)
+    {
+        if (!Files.exists(filePath))
+        {
+            throw new IllegalArgumentException("Word file not found");
+        }
+    }
 
     /**
-     * Main entry point (for standalone execution).
+     * Main entry point.
+     *
+     * @param args unused.
      */
     public static void main(final String[] args)
     {
@@ -248,13 +259,17 @@ public final class TwistedWordle
     private static List<String> getWordsFromConsole(final String playerName,
                                                     final Scanner scanner)
     {
+        validatePlayerName(playerName);
+        validateScannerObject(scanner);
+
         final List<String> chosenWords;
         chosenWords = new ArrayList<>();
 
+        // get 3 valid words from the user
         for (int i = 0; i < TOTAL_ROUNDS; i++)
         {
             String  enteredWord;
-            boolean valid = false;
+            boolean validWord;
 
             do
             {
@@ -263,33 +278,63 @@ public final class TwistedWordle
 
                 enteredWord = scanner.nextLine().trim().toUpperCase();
 
-                if (enteredWord.length() != WORD_LENGTH)
-                {
-                    System.out.println("    ERROR: Word must be exactly " +
-                                       WORD_LENGTH + " letters long.");
-                }
-                else if (staticWordSet == null ||
-                         staticWordSet.isEmpty())
-                {
-                    System.err.println("    ERROR: Word list is not available for validation.");
-                    return null;
-                }
-                else if (!staticWordSet.contains(enteredWord))
-                {
-                    System.out.println("    ERROR: '" + enteredWord + "' is not in the allowed word list.");
-                }
-                else
-                {
-                    valid = true;
-                }
+                validateStaticWordSet(staticWordSet);
 
-            } while (!valid);
+                validWord = validateWordLength(enteredWord) &&
+                            validateWordInWordList(enteredWord);
+
+            } while (!validWord);
 
             chosenWords.add(enteredWord);
         }
 
-        System.out.println("  " + playerName + " finished choosing words.");
+        System.out.println("  " +
+                           playerName +
+                           " finished choosing words.");
+
         return chosenWords;
+    }
+
+    /*
+     * Validates a scanner object.
+     */
+    private static void validateScannerObject(final Scanner scanner)
+    {
+        if (scanner == null)
+        {
+            throw new IllegalArgumentException("Scanner cannot be null");
+        }
+    }
+
+    /*
+     * Validates that the word length matches the game.
+     */
+    private static boolean validateWordLength(final String word)
+    {
+        if (word.length() != WORD_LENGTH)
+        {
+            System.out.println("    ERROR: Word must be exactly " +
+                               WORD_LENGTH + " letters long.");
+            return false;
+        }
+
+        return true;
+    }
+
+    /*
+     * Validates that the word is in the list of allowed words.
+     */
+    private static boolean validateWordInWordList(final String word)
+    {
+        if (!staticWordSet.contains(word))
+        {
+            System.out.println("    ERROR: '" +
+                               word +
+                               "' is not in the allowed word list.");
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -311,10 +356,8 @@ public final class TwistedWordle
                 Platform.runLater(() -> {});
             }
 
-            if (callback != null)
-            {
-                Platform.runLater(callback);
-            }
+            validateCallback(callback);
+            Platform.runLater(callback);
 
             return;
         }
@@ -325,18 +368,42 @@ public final class TwistedWordle
                           {
                               try
                               {
-                                  if (currentStage != null) currentStage.close();
+                                  validateStage(currentStage);
+                                  currentStage.close();
+
                                   currentStage = new Stage();
                                   new TwistedWordle().start(currentStage);
+
                               } catch (final Exception e)
                               {
                                   e.printStackTrace();
-                                  if (onCloseCallback != null)
-                                  {
-                                      onCloseCallback.run();
-                                  }
+
+                                  validateCallback(onCloseCallback);
+                                  onCloseCallback.run();
                               }
                           });
+    }
+
+    /*
+     * Validates a callback object.
+     */
+    private static void validateCallback(final Runnable callback)
+    {
+        if (callback == null)
+        {
+            throw new IllegalArgumentException("Callback cannot be null");
+        }
+    }
+
+    /*
+     * Validates a stage object.
+     */
+    private static void validateStage(final Stage stage)
+    {
+        if (stage == null)
+        {
+            throw new IllegalArgumentException("Stage cannot be null");
+        }
     }
 
     /**
@@ -347,18 +414,16 @@ public final class TwistedWordle
     @Override
     public void start(final Stage stage)
     {
+        validateStage(stage);
+
         this.primaryStage = stage;
         primaryStage.setOnHidden(e ->
                                  {
-                                     if (timer != null)
-                                     {
-                                         timer.stop();
-                                     }
+                                     validateTimer(timer);
+                                     timer.stop();
 
-                                     if (onCloseCallback != null)
-                                     {
-                                         Platform.runLater(onCloseCallback);
-                                     }
+                                     validateCallback(onCloseCallback);
+                                     Platform.runLater(onCloseCallback);
                                  });
 
         primaryStage.setTitle("Twisted Wordle");
@@ -366,18 +431,13 @@ public final class TwistedWordle
         // try to set up everything and start the game
         try
         {
-            player1       = new Player(staticPlayer1Name);
-            player2       = new Player(staticPlayer2Name);
+            player1 = PlayerFactory.createPlayer(staticPlayer1Name);
+            player2 = PlayerFactory.createPlayer(staticPlayer2Name);
+
             currentPlayer = player1;
 
-            // make sure nothing is invalid
-            if (staticWordsForPlayer1 == null ||
-                staticWordsForPlayer2 == null ||
-                staticWordsForPlayer1.size() != TOTAL_ROUNDS ||
-                staticWordsForPlayer2.size() != TOTAL_ROUNDS)
-            {
-                throw new IllegalStateException("Word lists not properly initialized before GUI start.");
-            }
+            validateWordsForPlayer(staticWordsForPlayer1);
+            validateWordsForPlayer(staticWordsForPlayer2);
 
             initializeGameUI(stage);
             startTurn(currentPlayer);
@@ -385,10 +445,20 @@ public final class TwistedWordle
         } catch (final Exception e)
         {
             e.printStackTrace();
-            if (primaryStage != null)
-            {
-                Platform.runLater(primaryStage::close);
-            }
+
+            validateStage(primaryStage);
+            Platform.runLater(primaryStage::close);
+        }
+    }
+
+    /*
+     * Validates a label object.
+     */
+    private static void validateTimer(final AnimationTimer timer)
+    {
+        if (timer == null)
+        {
+            throw new IllegalArgumentException("Timer cannot be null");
         }
     }
 
@@ -399,6 +469,8 @@ public final class TwistedWordle
      */
     private void initializeGameUI(final Stage stage)
     {
+        validateStage(stage);
+
         attemptsLeft = MAX_ATTEMPTS;
         currentRound = FIRST_ROUND;
 
@@ -422,7 +494,8 @@ public final class TwistedWordle
                 label.setFont(Font.font(20));
                 label.setMinSize(40, 40);
                 label.setAlignment(Pos.CENTER);
-                label.setStyle("-fx-border-color: black; -fx-border-width: 2;");
+                label.setStyle("-fx-border-color: black; " +
+                               "-fx-border-width: 2;");
                 gridLabels[row][col] = label;
                 gridPane.add(label, col, row);
             }
@@ -458,10 +531,15 @@ public final class TwistedWordle
         timerLabel = new Label("Time left: --");
         timerLabel.setFont(Font.font(20));
         scoreLabel = new Label("Scores: " +
-                               player1.getName() + ": 0 | " +
-                               player2.getName() + ": 0");
+                               player1.getName() +
+                               ": 0 | " +
+                               player2.getName() +
+                               ": 0");
         scoreLabel.setFont(Font.font(20));
-        roundLabel = new Label("Round: " + currentRound + " of " + TOTAL_ROUNDS);
+        roundLabel = new Label("Round: " +
+                               currentRound +
+                               " of " +
+                               TOTAL_ROUNDS);
         roundLabel.setFont(Font.font(20));
 
         final VBox root;
@@ -557,14 +635,16 @@ public final class TwistedWordle
 
         if (guess.equals(targetWord))
         {
-            if (timer != null)
-            {
-                timer.stop();
-            }
+            validateTimer(timer);
+            timer.stop();
 
-            long elapsedTime = (System.currentTimeMillis() - startTime) / TIME_FORMAT;
-            int  timeLeft    = Math.max(NOTHING, TURN_TIME - (int) elapsedTime);
-            int  score       = calculateScore(attemptsLeft + OFFSET, timeLeft);
+            final long elapsedTime;
+            final int  timeLeft;
+            final int  score;
+
+            elapsedTime = (System.currentTimeMillis() - startTime) / TIME_FORMAT;
+            timeLeft = Math.max(NOTHING, TURN_TIME - (int) elapsedTime);
+            score = calculateScore(attemptsLeft + OFFSET, timeLeft);
 
             currentPlayer.addScore(score);
 
@@ -583,10 +663,8 @@ public final class TwistedWordle
         }
         else if (attemptsLeft == NOTHING)
         {
-            if (timer != null)
-            {
-                timer.stop();
-            }
+            validateTimer(timer);
+            timer.stop();
 
             messageLabel.setText("Out of attempts! The word was: " +
                                  targetWord);
@@ -611,11 +689,9 @@ public final class TwistedWordle
      */
     public void prepareNextTurn()
     {
-        if (timer != null)
-        {
-            timer.stop();
-            timer = null;
-        }
+        validateTimer(timer);
+        timer.stop();
+        timer = null;
 
         timerLabel.setText("Time left: --");
 
@@ -650,6 +726,8 @@ public final class TwistedWordle
      */
     private void startTurn(final Player player)
     {
+        validatePlayer(player);
+
         currentPlayer = player;
         attemptsLeft  = MAX_ATTEMPTS;
 
@@ -687,13 +765,23 @@ public final class TwistedWordle
 
         inputField.setDisable(false);
 
-        // ensure UI updates are on JavaFX application thread
         Platform.runLater(() -> inputField.requestFocus());
         updateScoreboard();
 
         roundLabel.setText("Round: " + currentRound +
                            " of " + TOTAL_ROUNDS);
         startTimer();
+    }
+
+    /*
+     * Validates a player object.
+     */
+    private static void validatePlayer(final Player player)
+    {
+        if (player == null)
+        {
+            throw new IllegalStateException("Player cannot be null");
+        }
     }
 
     /**
@@ -724,6 +812,9 @@ public final class TwistedWordle
     public int calculateScore(final int attemptsLeftBeforeGuess,
                               final int timeLeft)
     {
+        validateNumberForCalculation(attemptsLeftBeforeGuess);
+        validateNumberForCalculation(timeLeft);
+
         int attemptsScore;
 
         if (attemptsLeftBeforeGuess > NOTHING)
@@ -735,6 +826,17 @@ public final class TwistedWordle
             attemptsScore = NOTHING;
         }
         return BASE_CORRECT_SCORE + attemptsScore + Math.max(NOTHING, timeLeft);
+    }
+
+    /*
+     * Validates a number for score calculation
+     */
+    private static void validateNumberForCalculation(final int num)
+    {
+        if (num < NOTHING)
+        {
+            throw new IllegalArgumentException("Number for calculation cannot be negative");
+        }
     }
 
     /**
@@ -754,10 +856,8 @@ public final class TwistedWordle
      */
     private void startTimer()
     {
-        if (timer != null)
-        {
-            timer.stop();
-        }
+        validateTimer(timer);
+        timer.stop();
 
         startTime = System.currentTimeMillis();
 
@@ -793,7 +893,7 @@ public final class TwistedWordle
                     delay = new PauseTransition(Duration.seconds(DELAY));
 
                     delay.setOnFinished(e -> Platform.runLater(
-                            () -> TwistedWordle.this.prepareNextTurn()));
+                            TwistedWordle.this::prepareNextTurn));
                     delay.play();
                 }
                 else
@@ -802,6 +902,7 @@ public final class TwistedWordle
                 }
             }
         };
+
         timer.start();
     }
 
@@ -810,12 +911,9 @@ public final class TwistedWordle
      */
     private void endGame()
     {
-        // stop the timer object
-        if (timer != null)
-        {
-            timer.stop();
-            timer = null;
-        }
+        validateTimer(timer);
+        timer.stop();
+        timer = null;
 
         messageLabel.setText("Game over! Final scores:");
         inputField.setDisable(true);
@@ -875,8 +973,12 @@ public final class TwistedWordle
         closeButton.setOnAction(e ->
                                 {
                                     popupStage.close();
-                                    if (primaryStage != null) primaryStage.close();
-                                    if (onCloseCallback != null) Platform.runLater(onCloseCallback);
+
+                                    validateStage(popupStage);
+                                    primaryStage.close();
+
+                                    validateCallback(onCloseCallback);
+                                    Platform.runLater(onCloseCallback);
                                 });
 
         final VBox popupLayout;

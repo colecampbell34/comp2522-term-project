@@ -20,8 +20,22 @@ public final class Player
      */
     public Player(final String name)
     {
+        validateName(name);
+
         this.name  = name;
         this.score = NOTHING;
+    }
+
+    /*
+     * Validates the player name.
+     */
+    private static void validateName(final String name)
+    {
+        if (name == null ||
+            name.isBlank())
+        {
+            throw new IllegalArgumentException("Invalid name");
+        }
     }
 
     /**
@@ -51,6 +65,19 @@ public final class Player
      */
     public void addScore(final int points)
     {
+        validatePoints(points);
+
         score += points;
+    }
+
+    /*
+     * Validates the points to add.
+     */
+    private static void validatePoints(final int points)
+    {
+        if (points < NOTHING)
+        {
+            throw new IllegalArgumentException("Points cannot be negative");
+        }
     }
 }

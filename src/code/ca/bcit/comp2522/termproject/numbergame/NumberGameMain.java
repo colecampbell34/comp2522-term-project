@@ -24,12 +24,15 @@ public final class NumberGameMain
      */
     public static void launchGame(final Runnable onClose)
     {
+        validateRunnable(onClose);
+
         Platform.runLater(() ->
                           {
                               try
                               {
-                                  if (currentNumberGameStage != null &&
-                                      currentNumberGameStage.isShowing())
+                                  validateStage(currentNumberGameStage);
+
+                                  if (currentNumberGameStage.isShowing())
                                   {
                                       currentNumberGameStage.toFront();
                                       return;
@@ -49,10 +52,8 @@ public final class NumberGameMain
                                                             currentNumberGameStage = null;
                                                         }
 
-                                                        if (onClose != null)
-                                                        {
-                                                            onClose.run();
-                                                        }
+                                                        validateRunnable(onClose);
+                                                        onClose.run();
                                                     });
 
                                   // Instantiate the actual game UI, passing the stage it should use.
@@ -64,8 +65,29 @@ public final class NumberGameMain
                               } catch (final Exception e)
                               {
                                   e.printStackTrace();
-
                               }
                           });
+    }
+
+    /*
+     * Validates a runnable object.
+     */
+    private static void validateRunnable(final Runnable runnable)
+    {
+        if (runnable == null)
+        {
+            throw new IllegalStateException("Runnable cannot be null");
+        }
+    }
+
+    /*
+     * Validates a stage object.
+     */
+    private static void validateStage(final Stage stage)
+    {
+        if (stage == null)
+        {
+            throw new IllegalStateException("Stage cannot be null");
+        }
     }
 }

@@ -16,9 +16,10 @@ import java.util.Random;
 
 /**
  * The Number Game implementation. Sets up and manages the game UI and logic.
+ * Players win if they successfully place all 20 numbers in ascending order.
  *
  * @author colecampbell
- * @version 1.1 // Version updated to reflect changes
+ * @version 1.0
  */
 public final class NumberGame extends AbstractGame
 {
@@ -48,10 +49,7 @@ public final class NumberGame extends AbstractGame
      */
     public NumberGame(final Stage stage)
     {
-        if (stage == null)
-        {
-            throw new IllegalArgumentException("Stage cannot be null");
-        }
+        validateStage(stage);
 
         this.gameStage = stage;
         resetLogicOnly();
@@ -59,6 +57,20 @@ public final class NumberGame extends AbstractGame
         this.gameStage.show();
     }
 
+    /*
+     * Validates a stage object.
+     */
+    private static void validateStage(final Stage stage)
+    {
+        if (stage == null)
+        {
+            throw new IllegalArgumentException("Stage cannot be null");
+        }
+    }
+
+    /*
+     * Sets up the UI for the number game.
+     */
     private void setupUI()
     {
         final VBox root;
@@ -71,6 +83,7 @@ public final class NumberGame extends AbstractGame
         gridPane.setHgap(10);
         gridPane.setVgap(10);
 
+        // set up actions for all buttons in the grid
         for (int row = 0; row < SQUARES_TALL; row++)
         {
             for (int col = 0; col < SQUARES_WIDE; col++)
@@ -81,8 +94,12 @@ public final class NumberGame extends AbstractGame
                 final int finalRow = row;
                 final int finalCol = col;
 
-                buttons[row][col].setOnAction(e -> handleGridButtonClick(finalRow, finalCol));
-                gridPane.add(buttons[row][col], col, row);
+                buttons[row][col].setOnAction(
+                        e -> handleGridButtonClick(finalRow, finalCol));
+
+                gridPane.add(buttons[row][col],
+                             col,
+                             row);
             }
         }
 
@@ -114,20 +131,21 @@ public final class NumberGame extends AbstractGame
     public void startGame()
     {
         resetLogicOnly();
-        resetUI(); // Set initial button text and enable buttons
+        resetUI();
         setTotalPlacements(NOTHING);
-        gameActive = true; // Set active before generating number
+        gameActive = true;
 
-        generateNextNumber(); // Generate first number
+        generateNextNumber();
 
         // checking if the first number can be placed just in case
         if (!canPlaceCurrentNumberAnywhere())
         {
-            statusLabel.setText("Lost! Impossible to place first number " + getCurrentNumber());
-            disableAllButtons(); // Prevent clicks
+            statusLabel.setText("Lost! Impossible to place first number " +
+                                getCurrentNumber());
+            disableAllButtons();
             endGame(false);
-            // gameActive is set to false within endGame
         }
+
         // If we get here, the game starts normally, statusLabel set by generateNextNumber
     }
 
@@ -187,6 +205,9 @@ public final class NumberGame extends AbstractGame
             return;
         }
 
+        validateRow(row);
+        validateCol(col);
+
         // convert the index for a 1-D array to check values
         final int index;
         index = row * SQUARES_WIDE + col;
@@ -211,11 +232,10 @@ public final class NumberGame extends AbstractGame
             // Check for win condition
             if (getTotalPlacements() == MAX_PLACEMENTS)
             {
-                endGame(true); // Player won
+                endGame(true);
             }
             else
             {
-                // Generate the next number
                 generateNextNumber();
 
                 if (gameActive && !canPlaceCurrentNumberAnywhere())
@@ -235,10 +255,33 @@ public final class NumberGame extends AbstractGame
                                 numToPlace +
                                 " there is illegal.");
             disableAllButtons();
-            endGame(false); // Player loses for making an incorrect placement
+            endGame(false);
         }
     }
 
+    /*
+     * Validates that the row is within bounds.
+     */
+    private static void validateRow(final int row)
+    {
+        if (row < NOTHING ||
+            row > SQUARES_TALL)
+        {
+            throw new IllegalArgumentException("Row is out of bounds");
+        }
+    }
+
+    /*
+     * Validates that the column is within bounds.
+     */
+    private static void validateCol(final int col)
+    {
+        if (col < NOTHING ||
+            col > SQUARES_WIDE)
+        {
+            throw new IllegalArgumentException("Column is out of bounds");
+        }
+    }
 
     /**
      * Checks if a number can be legally placed at the given 1D index based on
@@ -252,6 +295,9 @@ public final class NumberGame extends AbstractGame
     private boolean canPlaceNumber(final int index,
                                    final int number)
     {
+        validateIndex(index);
+        validateNumber(number);
+
         // Check all numbers placed at indices BEFORE the target index
         for (int i = 0; i < index; i++)
         {
@@ -274,8 +320,32 @@ public final class NumberGame extends AbstractGame
             }
         }
 
-        // If we passed both checks, the placement is valid relative to all other numbers
+        // If we passed both checks, the placement is valid
         return true;
+    }
+
+    /*
+     * Validates that the index is within the game board.
+     */
+    private static void validateIndex(final int index)
+    {
+        if (index < NOTHING ||
+            index > MAX_PLACEMENTS)
+        {
+            throw new IllegalArgumentException("Index is out of bounds");
+        }
+    }
+
+    /*
+     * Validates that the number is within the range for the game.
+     */
+    private static void validateNumber(final int number)
+    {
+        if (number < LOWER_BOUND ||
+            number > UPPER_BOUND)
+        {
+            throw new IllegalArgumentException("Number is out of bounds");
+        }
     }
 
     /**
@@ -306,7 +376,6 @@ public final class NumberGame extends AbstractGame
         return false;
     }
 
-
     /**
      * Ends the current game round, updates score, disables buttons, and prompts for replay.
      *
@@ -316,24 +385,25 @@ public final class NumberGame extends AbstractGame
     {
         if (!gameActive)
         {
-            return; // Avoid multiple calls if already ended
+            return;
         }
 
         gameActive = false; // Mark game as inactive first
 
         incrementGamesPlayed();
 
-        String headerText; // Use header for main result
+        String headerText;
 
         if (won)
         {
             incrementGamesWon();
             headerText = "Congratulations! You won!";
-            statusLabel.setText("You won!"); // Final status update
+            statusLabel.setText("You won!");
         }
         else
         {
             headerText = statusLabel.getText();
+
             if (headerText == null ||
                 headerText.isEmpty() ||
                 headerText.startsWith("Place the number:"))
@@ -351,7 +421,8 @@ public final class NumberGame extends AbstractGame
         alert.setContentText(won ? "Excellent work! Would you like to play again?" :
                              "Better luck next time! Would you like to try again?");
 
-        alert.getButtonTypes().setAll(ButtonType.YES, ButtonType.NO);
+        alert.getButtonTypes().setAll(ButtonType.YES,
+                                      ButtonType.NO);
 
         final Optional<ButtonType> result;
         result = alert.showAndWait();
@@ -361,16 +432,16 @@ public final class NumberGame extends AbstractGame
         if (result.isPresent() &&
             result.get() == ButtonType.YES)
         {
-            startGame(); // Restart the game
+            startGame();
         }
         else
         {
-            closeGameWindow(); // Close the application window
+            closeGameWindow();
         }
     }
 
     /**
-     * Disables all grid buttons, typically used when the game ends unexpectedly.
+     * Disables all grid buttons.
      */
     private void disableAllButtons()
     {
@@ -386,7 +457,6 @@ public final class NumberGame extends AbstractGame
         }
     }
 
-
     /**
      * Safely closes the games Stage.
      */
@@ -394,11 +464,13 @@ public final class NumberGame extends AbstractGame
     {
         System.out.println("Closing the Number Game window.");
 
-        if (gameStage != null)
-        {
-            gameStage.close();
-        }
-        else
+        validateGameStageForClose(gameStage);
+        gameStage.close();
+    }
+
+    private static void validateGameStageForClose(final Stage stage)
+    {
+        if (stage == null)
         {
             System.err.println("Error: Cannot close window.");
         }

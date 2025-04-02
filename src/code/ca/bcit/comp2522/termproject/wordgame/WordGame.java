@@ -140,7 +140,8 @@ public final class WordGame
                 case GIVE_CAPITAL -> giveCapital(randomKey);
                 case GIVE_COUNTRY -> giveCountry(randomKey);
                 case GIVE_FACT -> giveFact(randomKey);
-                default -> throw new IllegalArgumentException("Unexpected value: " + randomNum);
+                default -> throw new IllegalArgumentException("Unexpected value: " +
+                                                              randomNum);
             };
 
             if (i < LAST_QUESTION)
@@ -199,6 +200,8 @@ public final class WordGame
      */
     private static int giveCapital(final String key)
     {
+        validateKey(key);
+
         final Scanner input;
         int           guesses;
 
@@ -223,7 +226,9 @@ public final class WordGame
             guesses++;
         }
 
-        System.out.println("Sorry, the correct answer was " + World.worldMap.get(key).getName());
+        System.out.println("Sorry, the correct answer was " +
+                           World.worldMap.get(key).getName());
+
         return guesses;
     }
 
@@ -232,6 +237,8 @@ public final class WordGame
      */
     private static int giveCountry(final String key)
     {
+        validateKey(key);
+
         final Scanner input;
         int           guesses;
 
@@ -256,7 +263,9 @@ public final class WordGame
             guesses++;
         }
 
-        System.out.println("Sorry, the correct answer was " + World.worldMap.get(key).getCapitalCityName());
+        System.out.println("Sorry, the correct answer was " +
+                           World.worldMap.get(key).getCapitalCityName());
+
         return guesses;
     }
 
@@ -265,6 +274,8 @@ public final class WordGame
      */
     private static int giveFact(final String key)
     {
+        validateKey(key);
+
         final Random  random;
         final Scanner input;
         int           guesses;
@@ -293,7 +304,9 @@ public final class WordGame
             guesses++;
         }
 
-        System.out.println("Sorry, the correct answer was " + World.worldMap.get(key).getName());
+        System.out.println("Sorry, the correct answer was " +
+                           World.worldMap.get(key).getName());
+
         return guesses;
     }
 
@@ -311,7 +324,8 @@ public final class WordGame
      * Checks if the user has a new high score,
      * and prints the last high score if they do.
      */
-    private static void checkForHighScore(final Score latestScore) throws IOException
+    private static void checkForHighScore(final Score latestScore)
+    throws IOException
     {
         final List<Score> scores;
         Score             highScore;
@@ -322,7 +336,7 @@ public final class WordGame
         for (final Score score : scores)
         {
             if (highScore == null ||
-                score.getAvgScore() > highScore.getAvgScore())
+                highScore.getAvgScore() <= score.getAvgScore())
             {
                 highScore = score;
             }
@@ -331,7 +345,8 @@ public final class WordGame
         if (highScore == null ||
             latestScore.getAvgScore() > highScore.getAvgScore())
         {
-            System.out.printf("CONGRATULATIONS! You are the new high score with an average of %.2f ppg!\n",
+            System.out.printf("CONGRATULATIONS! You are the new high score " +
+                              "with an average of %.2f ppg!\n",
                               latestScore.getAvgScore());
 
             if (highScore != null)
@@ -343,6 +358,18 @@ public final class WordGame
             {
                 System.out.println("There was no previous high score.");
             }
+        }
+    }
+
+    /*
+     * Validates a key for the world map.
+     */
+    private static void validateKey(final String key)
+    {
+        if (key == null ||
+            key.isBlank())
+        {
+            throw new IllegalArgumentException("Key cannot be null or blank");
         }
     }
 }

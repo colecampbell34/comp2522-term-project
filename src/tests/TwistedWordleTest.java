@@ -20,7 +20,6 @@ import java.util.Set;
  */
 public final class TwistedWordleTest
 {
-
     @Test
     void testCalculateScore()
     {
@@ -35,10 +34,16 @@ public final class TwistedWordleTest
         assertEquals(140, scoreCalculator.calculateScore(6, 30), "Score: 6 attempts left, 30s");
     }
 
+    /**
+     * Tests the static loadAndProcessWords helper method when the file exists.
+     * Performs multiple tests for the array list.
+     *
+     * @param tempDir A temporary directory for test files.
+     */
     @Test
-    void testLoadAndProcessWordsSuccess(@TempDir final Path tempDir) throws Exception
+    void testLoadAndProcessWordsSuccess(@TempDir final Path tempDir)
+    throws Exception
     {
-        // Setup: Create a temporary word file
         final Path wordFile;
         wordFile = tempDir.resolve("testwords_load_success.txt");
 
@@ -55,8 +60,10 @@ public final class TwistedWordleTest
                 "VALID", // Valid
                 "again", // Lowercase
                 "WORDS"); // Valid
+
         Files.write(wordFile, wordsToWrite);
-        System.out.println("Test word file created at: " + wordFile.toAbsolutePath());
+        System.out.println("Test word file created at: " +
+                           wordFile.toAbsolutePath());
 
         // Action: Call the static helper method using reflection (since it's private)
         final Method method;
@@ -86,7 +93,6 @@ public final class TwistedWordleTest
         assertFalse(loadedWords.contains("SHRT"));
     }
 
-
     /**
      * Tests the static loadAndProcessWords helper method when the file does not exist.
      * Verifies that an IOException is thrown.
@@ -94,7 +100,8 @@ public final class TwistedWordleTest
      * @param tempDir A temporary directory for test files.
      */
     @Test
-    void testLoadAndProcessWordsFileNotExist(@TempDir final Path tempDir) throws Exception
+    void testLoadAndProcessWordsFileNotExist(@TempDir final Path tempDir)
+    throws Exception
     {
         // Setup: Path to a non-existent file
         final Path nonExistentFile;

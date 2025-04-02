@@ -16,6 +16,20 @@ public final class PlayerFactory
      */
     public static Player createPlayer(final String name)
     {
+        validatePlayerName(name);
+
         return new Player(name);
+    }
+
+    /*
+     * Validates the player name.
+     */
+    private static void validatePlayerName(final String name)
+    {
+        if (name == null ||
+            name.isBlank())
+        {
+            throw new IllegalArgumentException("Invalid player name");
+        }
     }
 }
