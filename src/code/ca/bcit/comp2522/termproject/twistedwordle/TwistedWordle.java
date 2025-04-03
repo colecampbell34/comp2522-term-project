@@ -28,7 +28,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 import java.util.Set;
-import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 /**
@@ -189,7 +188,6 @@ public final class TwistedWordle
      *
      * @param filename Path to the word file.
      * @return A Set of valid, uppercase, 5-letter words.
-     * @throws IOException If file access or reading fails.
      */
     public static Set<String> loadAndProcessWords(final String filename)
     throws IOException
