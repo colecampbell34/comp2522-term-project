@@ -1,5 +1,6 @@
 lesson 1: classes, constructors in Player class, static constants used
-lesson 2: exception handling when loading words from file
+lesson 2: unchecked exceptions used for validations,
+          checked exceptions used when loading words from file
 lesson 3: substitution used with currentPlayer being either player1 or player2
 lesson 4: twisted world implements the Scorable interface
 lesson 5: collections with List<String>

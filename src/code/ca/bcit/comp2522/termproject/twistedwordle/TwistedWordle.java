@@ -18,6 +18,7 @@ import javafx.scene.text.Font;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+import javafx.stage.WindowEvent;
 import javafx.util.Duration;
 
 import java.io.IOException;
@@ -43,7 +44,6 @@ public final class TwistedWordle
         extends Application
         implements Scorable
 {
-
     private static final int MAX_ATTEMPTS             = 6;
     private static final int WORD_LENGTH              = 5;
     private static final int TURN_TIME                = 90;
@@ -95,7 +95,8 @@ public final class TwistedWordle
         boolean success;
         success = false;
 
-        try {
+        try
+        {
             staticWordSet = loadAndProcessWords(WORD_FILE_PATH);
 
             System.out.println("Loaded " +
@@ -140,7 +141,8 @@ public final class TwistedWordle
 
             success = true;
 
-        } catch (final Exception e) {
+        } catch (final Exception e)
+        {
             e.printStackTrace();
         }
 
@@ -153,7 +155,8 @@ public final class TwistedWordle
     private static void validateStaticWordSet(final Set<String> staticWordSet)
     {
         if (staticWordSet == null ||
-            staticWordSet.isEmpty()) {
+            staticWordSet.isEmpty())
+        {
             throw new IllegalArgumentException("Word set cannot be null");
         }
     }
@@ -366,11 +369,36 @@ public final class TwistedWordle
                           {
                               try
                               {
-                                  validateStage(currentStage);
-                                  currentStage.close();
+                                  if (currentStage != null &&
+                                      currentStage.isShowing())
+                                  {
+                                      currentStage.toFront();
+                                      return;
+                                  }
+
+                                  if (currentStage != null)
+                                  {
+                                      currentStage.close();
+                                  }
 
                                   currentStage = new Stage();
+
+                                  currentStage.setTitle("Twisted Wordle");
+
+                                  currentStage.setOnHidden((final WindowEvent event) ->
+                                                           {
+                                                               if (currentStage == event.getSource())
+                                                               {
+                                                                   currentStage = null;
+                                                               }
+
+                                                               validateCallback(onCloseCallback);
+                                                               onCloseCallback.run();
+                                                           });
+
                                   new TwistedWordle().start(currentStage);
+
+                                  currentStage.toFront();
 
                               } catch (final Exception e)
                               {
@@ -417,13 +445,16 @@ public final class TwistedWordle
         this.primaryStage = stage;
         primaryStage.setOnHidden(e ->
                                  {
-                                     validateTimer(timer);
-                                     timer.stop();
+                                     if (timer != null)
+                                     {
+                                         timer.stop();
+                                     }
 
                                      validateCallback(onCloseCallback);
                                      Platform.runLater(onCloseCallback);
                                  });
 
+        primaryStage.toFront();
         primaryStage.setTitle("Twisted Wordle");
 
         // try to set up everything and start the game
@@ -446,17 +477,6 @@ public final class TwistedWordle
 
             validateStage(primaryStage);
             Platform.runLater(primaryStage::close);
-        }
-    }
-
-    /*
-     * Validates a label object.
-     */
-    private static void validateTimer(final AnimationTimer timer)
-    {
-        if (timer == null)
-        {
-            throw new IllegalArgumentException("Timer cannot be null");
         }
     }
 
@@ -575,13 +595,13 @@ public final class TwistedWordle
             return;
         }
 
-        final int currentAttempt;
+        final int       currentAttempt;
         final boolean[] targetMatched;
         final boolean[] guessMatched;
 
         currentAttempt = MAX_ATTEMPTS - attemptsLeft;
-        targetMatched = new boolean[WORD_LENGTH];
-        guessMatched = new boolean[WORD_LENGTH];
+        targetMatched  = new boolean[WORD_LENGTH];
+        guessMatched   = new boolean[WORD_LENGTH];
 
         // first pass for green letters
         for (int i = 0; i < WORD_LENGTH; i++)
@@ -633,16 +653,18 @@ public final class TwistedWordle
 
         if (guess.equals(targetWord))
         {
-            validateTimer(timer);
-            timer.stop();
+            if (timer != null)
+            {
+                timer.stop();
+            }
 
             final long elapsedTime;
             final int  timeLeft;
             final int  score;
 
             elapsedTime = (System.currentTimeMillis() - startTime) / TIME_FORMAT;
-            timeLeft = Math.max(NOTHING, TURN_TIME - (int) elapsedTime);
-            score = calculateScore(attemptsLeft + OFFSET, timeLeft);
+            timeLeft    = Math.max(NOTHING, TURN_TIME - (int) elapsedTime);
+            score       = calculateScore(attemptsLeft + OFFSET, timeLeft);
 
             currentPlayer.addScore(score);
 
@@ -661,8 +683,10 @@ public final class TwistedWordle
         }
         else if (attemptsLeft == NOTHING)
         {
-            validateTimer(timer);
-            timer.stop();
+            if (timer != null)
+            {
+                timer.stop();
+            }
 
             messageLabel.setText("Out of attempts! The word was: " +
                                  targetWord);
@@ -687,8 +711,10 @@ public final class TwistedWordle
      */
     public void prepareNextTurn()
     {
-        validateTimer(timer);
-        timer.stop();
+        if (timer != null)
+        {
+            timer.stop();
+        }
         timer = null;
 
         timerLabel.setText("Time left: --");
@@ -854,8 +880,10 @@ public final class TwistedWordle
      */
     private void startTimer()
     {
-        validateTimer(timer);
-        timer.stop();
+        if (timer != null)
+        {
+            timer.stop();
+        }
 
         startTime = System.currentTimeMillis();
 
@@ -869,10 +897,10 @@ public final class TwistedWordle
             public void handle(final long now)
             {
                 final long elapsedTime;
-                final int timeLeft;
+                final int  timeLeft;
 
                 elapsedTime = (System.currentTimeMillis() - startTime) / TIME_FORMAT;
-                timeLeft = TURN_TIME - (int) elapsedTime;
+                timeLeft    = TURN_TIME - (int) elapsedTime;
 
                 // time is up
                 if (timeLeft <= NOTHING)
@@ -909,8 +937,10 @@ public final class TwistedWordle
      */
     private void endGame()
     {
-        validateTimer(timer);
-        timer.stop();
+        if (timer != null)
+        {
+            timer.stop();
+        }
         timer = null;
 
         messageLabel.setText("Game over! Final scores:");
@@ -972,11 +1002,15 @@ public final class TwistedWordle
                                 {
                                     popupStage.close();
 
-                                    validateStage(popupStage);
-                                    primaryStage.close();
+                                    if (primaryStage != null)
+                                    {
+                                        primaryStage.close();
+                                    }
 
-                                    validateCallback(onCloseCallback);
-                                    Platform.runLater(onCloseCallback);
+                                    if (onCloseCallback != null)
+                                    {
+                                        Platform.runLater(onCloseCallback);
+                                    }
                                 });
 
         final VBox popupLayout;

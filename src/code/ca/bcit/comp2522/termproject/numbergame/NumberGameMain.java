@@ -30,16 +30,15 @@ public final class NumberGameMain
                           {
                               try
                               {
-                                  validateStage(currentNumberGameStage);
-
-                                  if (currentNumberGameStage.isShowing())
+                                  if (currentNumberGameStage != null &&
+                                      currentNumberGameStage.isShowing())
                                   {
                                       currentNumberGameStage.toFront();
                                       return;
                                   }
 
                                   final Stage stage;
-                                  stage = new Stage();
+                                  stage                  = new Stage();
                                   currentNumberGameStage = stage;
 
                                   // Set the title for the window
@@ -77,17 +76,6 @@ public final class NumberGameMain
         if (runnable == null)
         {
             throw new IllegalStateException("Runnable cannot be null");
-        }
-    }
-
-    /*
-     * Validates a stage object.
-     */
-    private static void validateStage(final Stage stage)
-    {
-        if (stage == null)
-        {
-            throw new IllegalStateException("Stage cannot be null");
         }
     }
 }
