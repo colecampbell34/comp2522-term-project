@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Scanner;
 
 /**
@@ -48,7 +49,8 @@ public class Score
                  final int correctSecondAttempts,
                  final int incorrectAttempts)
     {
-        validateDateTime(dateTime);
+        Objects.requireNonNull(dateTime,
+                               "DateTime object cannot be null");
         validateNumber(gamesPlayed);
         validateNumber(correctFirstAttempts);
         validateNumber(correctSecondAttempts);
@@ -63,17 +65,6 @@ public class Score
         this.score = (correctFirstAttempts *
                       FIRST_TRY_MULTIPLIER) +
                      correctSecondAttempts;
-    }
-
-    /*
-     * Validates a date time object.
-     */
-    private static void validateDateTime(final LocalDateTime dateTime)
-    {
-        if (dateTime == null)
-        {
-            throw new IllegalArgumentException("DateTime object cannot be null");
-        }
     }
 
     /*

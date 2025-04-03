@@ -25,10 +25,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -261,7 +258,8 @@ public final class TwistedWordle
                                                     final Scanner scanner)
     {
         validatePlayerName(playerName);
-        validateScannerObject(scanner);
+        Objects.requireNonNull(scanner,
+                               "Scanner cannot be null");
 
         final List<String> chosenWords;
         chosenWords = new ArrayList<>();
@@ -294,17 +292,6 @@ public final class TwistedWordle
                            " finished choosing words.");
 
         return chosenWords;
-    }
-
-    /*
-     * Validates a scanner object.
-     */
-    private static void validateScannerObject(final Scanner scanner)
-    {
-        if (scanner == null)
-        {
-            throw new IllegalArgumentException("Scanner cannot be null");
-        }
     }
 
     /*
@@ -345,19 +332,16 @@ public final class TwistedWordle
      */
     public static void launchGame(final Runnable callback)
     {
-        if (staticPlayer1Name == null ||
+        if (staticPlayer1Name     == null ||
             staticWordsForPlayer1 == null ||
             staticWordsForPlayer2 == null ||
-            staticWordSet == null)
+            staticWordSet         == null)
         {
-            System.err.println("Cannot launch game: Pre-game setup data missing or incomplete.");
+            System.err.println("Cannot launch game: " +
+                               "Pre-game setup data missing or incomplete.");
 
-            if (Platform.isFxApplicationThread())
-            {
-                Platform.runLater(() -> {});
-            }
-
-            validateCallback(callback);
+            Objects.requireNonNull(callback,
+                                   "Callback cannot be null");
             Platform.runLater(callback);
 
             return;
@@ -392,7 +376,8 @@ public final class TwistedWordle
                                                                    currentStage = null;
                                                                }
 
-                                                               validateCallback(onCloseCallback);
+                                                               Objects.requireNonNull(onCloseCallback,
+                                                                                      "Callback cannot be null");
                                                                onCloseCallback.run();
                                                            });
 
@@ -404,32 +389,11 @@ public final class TwistedWordle
                               {
                                   e.printStackTrace();
 
-                                  validateCallback(onCloseCallback);
+                                  Objects.requireNonNull(onCloseCallback,
+                                                         "Callback cannot be null");
                                   onCloseCallback.run();
                               }
                           });
-    }
-
-    /*
-     * Validates a callback object.
-     */
-    private static void validateCallback(final Runnable callback)
-    {
-        if (callback == null)
-        {
-            throw new IllegalArgumentException("Callback cannot be null");
-        }
-    }
-
-    /*
-     * Validates a stage object.
-     */
-    private static void validateStage(final Stage stage)
-    {
-        if (stage == null)
-        {
-            throw new IllegalArgumentException("Stage cannot be null");
-        }
     }
 
     /**
@@ -440,7 +404,8 @@ public final class TwistedWordle
     @Override
     public void start(final Stage stage)
     {
-        validateStage(stage);
+        Objects.requireNonNull(stage,
+                               "Stage cannot be null");
 
         this.primaryStage = stage;
         primaryStage.setOnHidden(e ->
@@ -450,7 +415,8 @@ public final class TwistedWordle
                                          timer.stop();
                                      }
 
-                                     validateCallback(onCloseCallback);
+                                     Objects.requireNonNull(onCloseCallback,
+                                                            "Callback cannot be null");
                                      Platform.runLater(onCloseCallback);
                                  });
 
@@ -475,7 +441,8 @@ public final class TwistedWordle
         {
             e.printStackTrace();
 
-            validateStage(primaryStage);
+            Objects.requireNonNull(primaryStage,
+                                   "Stage cannot be null");
             Platform.runLater(primaryStage::close);
         }
     }
@@ -487,7 +454,8 @@ public final class TwistedWordle
      */
     private void initializeGameUI(final Stage stage)
     {
-        validateStage(stage);
+        Objects.requireNonNull(stage,
+                               "Stage cannot be null");
 
         attemptsLeft = MAX_ATTEMPTS;
         currentRound = FIRST_ROUND;
@@ -750,7 +718,8 @@ public final class TwistedWordle
      */
     private void startTurn(final Player player)
     {
-        validatePlayer(player);
+        Objects.requireNonNull(player,
+                               "Player cannot be null");
 
         currentPlayer = player;
         attemptsLeft  = MAX_ATTEMPTS;
@@ -795,17 +764,6 @@ public final class TwistedWordle
         roundLabel.setText("Round: " + currentRound +
                            " of " + TOTAL_ROUNDS);
         startTimer();
-    }
-
-    /*
-     * Validates a player object.
-     */
-    private static void validatePlayer(final Player player)
-    {
-        if (player == null)
-        {
-            throw new IllegalStateException("Player cannot be null");
-        }
     }
 
     /**

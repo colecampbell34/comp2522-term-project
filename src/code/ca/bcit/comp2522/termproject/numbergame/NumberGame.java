@@ -11,6 +11,7 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
 
@@ -23,7 +24,6 @@ import java.util.Random;
  */
 public final class NumberGame extends AbstractGame
 {
-
     private static final int SQUARES_WIDE   = 5;
     private static final int SQUARES_TALL   = 4;
     private static final int NOTHING        = 0;
@@ -49,23 +49,13 @@ public final class NumberGame extends AbstractGame
      */
     public NumberGame(final Stage stage)
     {
-        validateStage(stage);
+        Objects.requireNonNull(stage,
+                               "Stage cannot be null");
 
         this.gameStage = stage;
         resetLogicOnly();
         setupUI(); // Build the UI components
         this.gameStage.show();
-    }
-
-    /*
-     * Validates a stage object.
-     */
-    private static void validateStage(final Stage stage)
-    {
-        if (stage == null)
-        {
-            throw new IllegalArgumentException("Stage cannot be null");
-        }
     }
 
     /*
@@ -464,15 +454,8 @@ public final class NumberGame extends AbstractGame
     {
         System.out.println("Closing the Number Game window.");
 
-        validateGameStageForClose(gameStage);
+        Objects.requireNonNull(gameStage,
+                               "Stage cannot be null");
         gameStage.close();
-    }
-
-    private static void validateGameStageForClose(final Stage stage)
-    {
-        if (stage == null)
-        {
-            System.err.println("Error: Cannot close window.");
-        }
     }
 }

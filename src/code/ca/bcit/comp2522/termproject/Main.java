@@ -178,7 +178,7 @@ public class Main
     /* Launches the wordle game. */
     private static void playTwistedWordleGame()
     {
-        System.out.println("\nSetting up Twisted Wordle Game...");
+        System.out.println("\nLaunching Twisted Wordle Game...");
 
         boolean setupSuccessful;
         setupSuccessful = TwistedWordle.setupGameFromConsole();
@@ -192,6 +192,7 @@ public class Main
             try
             {
                 TwistedWordle.launchGame(gameCloseLatch::countDown);
+
                 gameCloseLatch.await();
 
             } catch (final InterruptedException e)

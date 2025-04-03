@@ -4,6 +4,8 @@ import javafx.application.Platform;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
+import java.util.Objects;
+
 /**
  * Provides a static method to launch the Number Game UI on the JavaFX Application Thread.
  * Manages the lifecycle of the game's Stage.
@@ -24,7 +26,8 @@ public final class NumberGameMain
      */
     public static void launchGame(final Runnable onClose)
     {
-        validateRunnable(onClose);
+        Objects.requireNonNull(onClose,
+                               "Runnable cannot be null");
 
         Platform.runLater(() ->
                           {
@@ -51,7 +54,8 @@ public final class NumberGameMain
                                                             currentNumberGameStage = null;
                                                         }
 
-                                                        validateRunnable(onClose);
+                                                        Objects.requireNonNull(onClose,
+                                                                               "Runnable cannot be null");
                                                         onClose.run();
                                                     });
 
@@ -66,16 +70,5 @@ public final class NumberGameMain
                                   e.printStackTrace();
                               }
                           });
-    }
-
-    /*
-     * Validates a runnable object.
-     */
-    private static void validateRunnable(final Runnable runnable)
-    {
-        if (runnable == null)
-        {
-            throw new IllegalStateException("Runnable cannot be null");
-        }
     }
 }
