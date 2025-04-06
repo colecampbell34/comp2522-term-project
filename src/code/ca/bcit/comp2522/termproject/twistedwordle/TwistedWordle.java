@@ -54,6 +54,7 @@ public final class TwistedWordle
     private static final int OFFSET                   = 1;
 
     private static final String WORD_FILE_PATH = "src/resources/words.txt";
+    private static final String STAGE_MESSAGE  = "Stage cannot be null";
 
     private static String       staticPlayer1Name;
     private static String       staticPlayer2Name;
@@ -356,6 +357,7 @@ public final class TwistedWordle
                                   if (currentStage != null &&
                                       currentStage.isShowing())
                                   {
+                                      // make sure the stage is showing to the user
                                       currentStage.toFront();
                                       return;
                                   }
@@ -405,7 +407,7 @@ public final class TwistedWordle
     public void start(final Stage stage)
     {
         Objects.requireNonNull(stage,
-                               "Stage cannot be null");
+                               STAGE_MESSAGE);
 
         this.primaryStage = stage;
         primaryStage.setOnHidden(e ->
@@ -442,7 +444,7 @@ public final class TwistedWordle
             e.printStackTrace();
 
             Objects.requireNonNull(primaryStage,
-                                   "Stage cannot be null");
+                                   STAGE_MESSAGE);
             Platform.runLater(primaryStage::close);
         }
     }
@@ -455,7 +457,7 @@ public final class TwistedWordle
     private void initializeGameUI(final Stage stage)
     {
         Objects.requireNonNull(stage,
-                               "Stage cannot be null");
+                               STAGE_MESSAGE);
 
         attemptsLeft = MAX_ATTEMPTS;
         currentRound = FIRST_ROUND;

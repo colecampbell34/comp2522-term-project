@@ -14,26 +14,29 @@ import java.util.*;
  */
 public final class WordGame
 {
-    private static final int    NOTHING           = 0;
-    private static final int    GUESSES_PER_ROUND = 10;
-    private static final int    LAST_QUESTION     = 9;
-    private static final int    RANDOM_SELECTOR   = 3;
-    private static final int    GIVE_CAPITAL      = 0;
-    private static final int    GIVE_COUNTRY      = 1;
-    private static final int    GIVE_FACT         = 2;
-    private static final int    RANDOM_INDEX      = 3;
-    private static final int    CHAR_OFFSET       = 2;
-    private static final int    FIRST_HALF        = 0;
-    private static final int    SECOND_HALF       = 1;
-    private static final int    NUMBER_OF_FACTS   = 3;
-    private static final int    FIRST_TRY         = 0;
-    private static final int    SECOND_TRY        = 1;
-    private static final int    MAX_GUESSES       = 2;
+    private static final int NOTHING           = 0;
+    private static final int GUESSES_PER_ROUND = 10;
+    private static final int LAST_QUESTION     = 9;
+    private static final int RANDOM_SELECTOR   = 3;
+    private static final int GIVE_CAPITAL      = 0;
+    private static final int GIVE_COUNTRY      = 1;
+    private static final int GIVE_FACT         = 2;
+    private static final int RANDOM_INDEX      = 3;
+    private static final int CHAR_OFFSET       = 2;
+    private static final int FIRST_HALF        = 0;
+    private static final int SECOND_HALF       = 1;
+    private static final int NUMBER_OF_FACTS   = 3;
+    private static final int FIRST_TRY         = 0;
+    private static final int SECOND_TRY        = 1;
+    private static final int MAX_GUESSES       = 2;
 
-    private static final String SCORE_FILE        = "score.txt";
-    private static final char   FIRST_FILE        = 'a';
-    private static final char   EMPTY_FILE        = 'w';
-    private static final char   LAST_FILE         = 'z';
+    private static final String SCORE_FILE    = "score.txt";
+    private static final String CORRECT       = "CORRECT!";
+    private static final String INCORRECT     = "INCORRECT!";
+    private static final String SORRY_MESSAGE = "Sorry, the correct answer was ";
+    private static final char   FIRST_FILE    = 'a';
+    private static final char   EMPTY_FILE    = 'w';
+    private static final char   LAST_FILE     = 'z';
 
     private static int gamesPlayed;
     private static int correctFirstAttempts;
@@ -78,7 +81,9 @@ public final class WordGame
                 final File    file;
                 final Scanner fileScanner;
 
-                file        = new File("src/resources/" + fileName + ".txt");
+                file        = new File("src/resources/" +
+                                       fileName +
+                                       ".txt");
                 fileScanner = new Scanner(file);
 
                 while (fileScanner.hasNext())
@@ -100,10 +105,13 @@ public final class WordGame
                 fileScanner.close();
             } catch (final FileNotFoundException e)
             {
-                System.err.println("Error opening file: " + fileName);
+                System.err.println("Error opening file: " +
+                                   fileName);
             } catch (final Exception e)
             {
-                System.err.println("Error processing file: " + fileName + " - " + e.getMessage());
+                System.err.println("Error processing file: " +
+                                   fileName + " - " +
+                                   e.getMessage());
             }
 
             fileName++;
@@ -218,15 +226,15 @@ public final class WordGame
 
             if (guess.equalsIgnoreCase(World.worldMap.get(key).getName()))
             {
-                System.out.println("CORRECT!");
+                System.out.println(CORRECT);
                 return guesses;
             }
 
-            System.out.println("INCORRECT!");
+            System.out.println(INCORRECT);
             guesses++;
         }
 
-        System.out.println("Sorry, the correct answer was " +
+        System.out.println(SORRY_MESSAGE +
                            World.worldMap.get(key).getName());
 
         return guesses;
@@ -255,15 +263,15 @@ public final class WordGame
 
             if (guess.equalsIgnoreCase(World.worldMap.get(key).getCapitalCityName()))
             {
-                System.out.println("CORRECT!");
+                System.out.println(CORRECT);
                 return guesses;
             }
 
-            System.out.println("INCORRECT!");
+            System.out.println(INCORRECT);
             guesses++;
         }
 
-        System.out.println("Sorry, the correct answer was " +
+        System.out.println(SORRY_MESSAGE +
                            World.worldMap.get(key).getCapitalCityName());
 
         return guesses;
@@ -296,15 +304,15 @@ public final class WordGame
 
             if (guess.equalsIgnoreCase(World.worldMap.get(key).getName()))
             {
-                System.out.println("CORRECT!");
+                System.out.println(CORRECT);
                 return guesses;
             }
 
-            System.out.println("INCORRECT!");
+            System.out.println(INCORRECT);
             guesses++;
         }
 
-        System.out.println("Sorry, the correct answer was " +
+        System.out.println(SORRY_MESSAGE +
                            World.worldMap.get(key).getName());
 
         return guesses;

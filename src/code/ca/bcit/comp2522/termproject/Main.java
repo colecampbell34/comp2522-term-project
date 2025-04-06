@@ -55,7 +55,7 @@ public class Main
             }
 
             final char choice;
-            choice = line.toUpperCase().charAt(FIRST_INDEX); // Get first char
+            choice = line.toUpperCase().charAt(FIRST_INDEX);
 
             switch (choice)
             {
@@ -144,7 +144,6 @@ public class Main
         {
             System.out.println("\nStarting the Word game...");
             WordGame.play();
-            System.out.println("Word game finished.");
         } catch (final IOException e)
         {
             e.printStackTrace();
@@ -205,8 +204,7 @@ public class Main
         }
         else
         {
-            System.err.println("Failed to set up Twisted Wordle.");
+            System.err.println("Failed to set up Twisted Wordle from the console.");
         }
-        System.out.println("Returning to main menu...");
     }
 }
