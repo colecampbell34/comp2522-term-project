@@ -10,14 +10,23 @@ import java.util.Scanner;
 import java.util.concurrent.CountDownLatch;
 
 /**
- * The main class for Cole Campbell's 2522 term project.
- * Handles the main menu and launching different games.
- * Ensures JavaFX platform is managed correctly for reusable stages.
+ * The main class that controls the entry point of the term project application.
+ * It presents the user with a menu to choose from multiple games and launches the selected one.
+ * Also handles JavaFX platform initialization to support UI elements used by the games.
+ * This class ensures that the platform remains active throughout the program's lifecycle,
+ * allowing users to launch different JavaFX-based games one after another without crashing.
+ *
+ * Games available:
+ * - Word Game
+ * - Number Game (JavaFX-based)
+ * - Twisted Wordle (JavaFX-based with console-based setup)
+ *
+ * The class handles graceful shutdown and resource cleanup.
  *
  * @author colecampbell
  * @version 1.0
  */
-public class Main
+public final class Main
 {
     private static final Scanner input               = new Scanner(System.in);
     private static final char    WORD_GAME           = 'W';
@@ -25,11 +34,18 @@ public class Main
     private static final char    TWISTED_WORDLE_GAME = 'T';
     private static final char    QUIT                = 'Q';
     private static final int     FIRST_INDEX         = 0;
+    private static final int     EXIT_STATUS         = 1;
+    private static final int     COUNTDOWN           = 1;
 
     /**
-     * The entry point for the JVM.
+     * Entry point for the application. Initializes JavaFX and
+     * displays a game selection menu to the user.
+     * Based on the user's choice, it launches the corresponding game
+     * and waits for the game session to end before returning to the menu.
+     * Continues this cycle until the user chooses to quit, at which point
+     * it gracefully shuts down JavaFX and closes system resources.
      *
-     * @param args unused
+     * @param args command-line arguments (not used)
      */
     public static void main(final String[] args)
     {
@@ -38,10 +54,10 @@ public class Main
         System.out.println("Welcome to Cole's comp2522 term project!");
         System.out.println("----------------------------------------");
 
-        boolean keepRunning;
-        keepRunning = true;
+        boolean running;
+        running = true;
 
-        while (keepRunning)
+        while (running)
         {
             printMenu();
 
@@ -75,7 +91,7 @@ public class Main
                     // Close the scanner resource
                     input.close();
                     // Exit the application
-                    keepRunning = false; // Exit loop
+                    running = false; // Exit loop
                     System.out.println("Goodbye!");
                     break;
                 default:
@@ -85,7 +101,7 @@ public class Main
                     break;
             }
 
-            if (keepRunning)
+            if (running)
             {
                 System.out.println("\nPress Enter to return to the main menu...");
                 input.nextLine(); // Consume the enter press
@@ -93,7 +109,12 @@ public class Main
         }
     }
 
-    /* Initializes the UI for all the games. */
+    /*
+     * Initializes the JavaFX platform required for launching JavaFX-based games.
+     * Ensures that the platform remains active even after a game window is closed,
+     * allowing users to launch multiple games in one session without reinitialization.
+     * Handles edge cases where JavaFX is already running to prevent crashes.
+     */
     private static void initializeJavaFX()
     {
         try
@@ -121,11 +142,14 @@ public class Main
         {
             System.err.println("Failed to initialize JavaFX Platform!");
             e.printStackTrace();
-            System.exit(1);
+            System.exit(EXIT_STATUS);
         }
     }
 
-    /* Prints the game selection menu. */
+    /*
+     * Displays the main menu to the user with options to play different games or quit the application.
+     * Prompts the user for input corresponding to a specific game selection or quit command.
+     */
     private static void printMenu()
     {
         System.out.println("\n--- Main Menu ---");
@@ -137,7 +161,10 @@ public class Main
         System.out.print("Your choice: ");
     }
 
-    /* Launches the word game. */
+    /*
+     * Attempts to start the Word Game by invoking its play method.
+     * Catches and prints any IOExceptions that occur during game setup or execution.
+     */
     private static void playWordGame()
     {
         try
@@ -150,14 +177,18 @@ public class Main
         }
     }
 
-    /* Launches the number game. */
+    /*
+     * Launches the Number Game, a JavaFX-based game.
+     * Uses a CountDownLatch to pause the main thread until the game window is closed by the user.
+     * Handles potential exceptions and interruptions during game execution.
+     */
     private static void playNumberGame()
     {
         System.out.println("\nLaunching Number Game...");
 
         // pause the main thread until the number game is done
         final CountDownLatch gameCloseLatch;
-        gameCloseLatch = new CountDownLatch(1);
+        gameCloseLatch = new CountDownLatch(COUNTDOWN);
 
         try
         {
@@ -174,7 +205,11 @@ public class Main
         }
     }
 
-    /* Launches the wordle game. */
+    /*
+     * Launches the Twisted Wordle game after setting it up through console inputs.
+     * If setup is successful, starts the JavaFX game and waits until the user closes the window.
+     * Logs an error message if the game setup fails or if an exception occurs during launch.
+     */
     private static void playTwistedWordleGame()
     {
         System.out.println("\nLaunching Twisted Wordle Game...");

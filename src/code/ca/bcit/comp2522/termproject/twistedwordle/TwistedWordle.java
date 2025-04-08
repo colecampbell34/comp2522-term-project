@@ -29,10 +29,19 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Custom multiplayer wordle game. Words chosen via console before GUI starts.
- * Words must be part of the text file in resources to be considered.
- * Players have 6 guesses each round, scores are calculated based on
- * time, remaining guesses and correct/incorrect.
+ * Represents the main application class for the Twisted Wordle game.
+ * This class handles the game setup via the console, manages the JavaFX GUI,
+ * controls the game flow between players, tracks rounds, times turns, and calculates scores.
+ * <p>
+ * This class provides the following functionality:
+ * - Console-based setup for player names and word selection.
+ * - Loading and validation of a word list from a file.
+ * - JavaFX GUI for displaying the game grid, input fields, messages, timer, and scores.
+ * - Turn-based gameplay for two players across multiple rounds.
+ * - Guess evaluation with visual feedback (correct position, correct letter/wrong position, incorrect).
+ * - Turn timer implementation.
+ * - Score calculation based on remaining attempts and time.
+ * - End-of-game summary and winner declaration.
  *
  * @author colecampbell
  * @version 1.0
@@ -81,9 +90,12 @@ public final class TwistedWordle
     private Stage          primaryStage;
 
     /**
-     * Performs console setup: loads words async (using helper), gets names/words.
+     * Performs initial game setup through the console interface.
+     * This method handles loading the word list, getting player names,
+     * and allowing each player to choose words for their opponent.
+     * It relies on static fields to store this setup data before the GUI starts.
      *
-     * @return true if successful, false otherwise.
+     * @return true if the setup completes successfully, false if an error occurs.
      */
     public static boolean setupGameFromConsole()
     {
@@ -141,54 +153,64 @@ public final class TwistedWordle
 
         } catch (final Exception e)
         {
-            e.printStackTrace();
+            // Log the exception details for debugging
+            System.err.println("An error occurred during console setup: " + e.getMessage());
+            e.printStackTrace(); // Consider using a logging framework for better error handling
         }
+        // No need to close System.in scanner
 
         return success;
     }
 
     /*
-     * Validates a word set.
+     * Validates that the static word set is not null and not empty.
+     * Throws an IllegalArgumentException if the set is invalid.
      */
     private static void validateStaticWordSet(final Set<String> staticWordSet)
     {
         if (staticWordSet == null ||
             staticWordSet.isEmpty())
         {
-            throw new IllegalArgumentException("Word set cannot be null");
+            throw new IllegalArgumentException("Word set cannot be null or empty");
         }
     }
 
     /*
-     * Validates a player name.
+     * Validates that the player name is neither null nor blank.
+     * Throws an IllegalArgumentException if the name is invalid.
      */
     private static void validatePlayerName(final String name)
     {
         if (name == null ||
             name.isBlank())
         {
-            throw new IllegalArgumentException("Name should not be null or blank");
+            throw new IllegalArgumentException("Player name should not be null or blank");
         }
     }
 
     /*
-     * Validates a word list.
+     * Validates that the list of words chosen for a player is not null
+     * and contains the correct number of words (equal to TOTAL_ROUNDS).
+     * Throws an IllegalStateException if the list is invalid.
      */
     private static void validateWordsForPlayer(final List<String> words)
     {
         if (words == null ||
             words.size() != TOTAL_ROUNDS)
         {
-            throw new IllegalStateException("Word list for player is invalid");
+            throw new IllegalStateException("Word list for player is invalid (null or wrong size)");
         }
     }
 
     /**
-     * Reads, checks, filters, and collects words from a file.
-     * This method contains the core logic testable by unit tests.
+     * Reads words from the specified file, filters them based on length,
+     * converts them to uppercase, and returns them as a Set.
+     * This method performs the core logic for loading and validating words from the source file.
      *
-     * @param filename Path to the word file.
-     * @return A Set of valid, uppercase, 5-letter words.
+     * @param filename The path to the file containing words. Must be non-null and non-blank.
+     * @return A Set containing valid, uppercase words of the required length (WORD_LENGTH).
+     * @throws IOException              if an I/O error occurs reading from the file.
+     * @throws IllegalArgumentException if the filename is invalid or the file does not exist.
      */
     public static Set<String> loadAndProcessWords(final String filename)
     throws IOException
@@ -200,7 +222,7 @@ public final class TwistedWordle
 
         validateFileExistence(filePath);
 
-        // return only the valid 5-letter words
+        // Read all lines, trim whitespace, filter by length, convert to uppercase, collect into a Set.
         return Files.readAllLines(filePath)
                     .stream()
                     .map(String::trim)
@@ -210,32 +232,37 @@ public final class TwistedWordle
     }
 
     /*
-     * Validates a file name.
+     * Validates that the provided file name string is neither null nor blank.
+     * Throws an IllegalArgumentException if the file name is invalid.
      */
     private static void validateFileName(final String fileName)
     {
         if (fileName == null ||
             fileName.isBlank())
         {
-            throw new IllegalArgumentException("Invalid file name");
+            throw new IllegalArgumentException("Invalid file name provided (null or blank)");
         }
     }
 
     /*
-     * Validates that the file exists.
+     * Validates that the file specified by the Path object exists.
+     * Throws an IllegalArgumentException if the file does not exist.
      */
     private static void validateFileExistence(final Path filePath)
     {
         if (!Files.exists(filePath))
         {
-            throw new IllegalArgumentException("Word file not found");
+            // Provide a more informative error message including the path
+            throw new IllegalArgumentException("Word file not found at path: " + filePath.toAbsolutePath());
         }
     }
 
     /**
-     * Main entry point.
+     * The main entry point for the application.
+     * It triggers the console setup process and, if successful,
+     * launches the JavaFX application GUI. If setup fails, it prints an error message.
      *
-     * @param args unused.
+     * @param args Command-line arguments (not used).
      */
     public static void main(final String[] args)
     {
@@ -244,28 +271,35 @@ public final class TwistedWordle
 
         if (setupOk)
         {
+            // Launch the JavaFX application thread
             launch(args);
         }
         else
         {
             System.err.println("Twisted Wordle setup failed. Exiting.");
+            // Optionally System.exit(1) if immediate termination is desired
         }
     }
 
     /*
-     * Reads the words from the console that the user wants their opponent to guess.
+     * Prompts the specified player via the console to enter a fixed number (TOTAL_ROUNDS)
+     * of valid words for their opponent. Validates each entered word for length
+     * and existence in the loaded staticWordSet.
      */
     private static List<String> getWordsFromConsole(final String playerName,
                                                     final Scanner scanner)
     {
         validatePlayerName(playerName);
-        Objects.requireNonNull(scanner,
-                               "Scanner cannot be null");
+        Objects.requireNonNull(scanner, "Scanner cannot be null for console input");
+        // Ensure word set is ready before proceeding
+        validateStaticWordSet(staticWordSet);
 
         final List<String> chosenWords;
         chosenWords = new ArrayList<>();
 
-        // get 3 valid words from the user
+        System.out.println("Words must be " + WORD_LENGTH + " letters long and present in the loaded word list.");
+
+        // Loop until the required number of valid words are entered
         for (int i = 0; i < TOTAL_ROUNDS; i++)
         {
             String  enteredWord;
@@ -273,15 +307,20 @@ public final class TwistedWordle
 
             do
             {
-                System.out.printf("  Enter word %d of %d (must be %d letters and in the list): ",
-                                  i + OFFSET, TOTAL_ROUNDS, WORD_LENGTH);
+                System.out.printf("  Enter word %d of %d: ",
+                                  i + OFFSET, TOTAL_ROUNDS);
 
                 enteredWord = scanner.nextLine().trim().toUpperCase();
 
-                validateStaticWordSet(staticWordSet);
-
+                // Perform validation checks sequentially
                 validWord = validateWordLength(enteredWord) &&
                             validateWordInWordList(enteredWord);
+
+                // Provide feedback if the word is invalid
+                if (!validWord)
+                {
+                    System.out.println("    Please try again.");
+                }
 
             } while (!validWord);
 
@@ -296,489 +335,625 @@ public final class TwistedWordle
     }
 
     /*
-     * Validates that the word length matches the game.
+     * Validates if the entered word has the correct length (WORD_LENGTH).
+     * Prints an error message to the console if the length is incorrect.
      */
     private static boolean validateWordLength(final String word)
     {
-        if (word.length() != WORD_LENGTH)
+        // Check for null to avoid NullPointerException, although trim() handles it.
+        if (word == null || word.length() != WORD_LENGTH)
         {
             System.out.println("    ERROR: Word must be exactly " +
                                WORD_LENGTH + " letters long.");
             return false;
         }
-
         return true;
     }
 
     /*
-     * Validates that the word is in the list of allowed words.
+     * Validates if the entered word exists in the static set of allowed words (staticWordSet).
+     * Prints an error message to the console if the word is not found.
+     * Assumes staticWordSet has been previously validated and is not null.
      */
     private static boolean validateWordInWordList(final String word)
     {
-        if (!staticWordSet.contains(word))
+        // Check for null defensively, although upstream validation might cover this.
+        if (word == null || !staticWordSet.contains(word))
         {
             System.out.println("    ERROR: '" +
-                               word +
+                               word + // Display the problematic word
                                "' is not in the allowed word list.");
             return false;
         }
-
         return true;
     }
 
     /**
-     * Launches the UI for the game
+     * Launches the JavaFX GUI for the game on the JavaFX Application Thread.
+     * Ensures that the necessary static setup data (player names, words, word set) is available.
+     * If data is missing, it logs an error and executes the callback.
+     * Manages the game's Stage lifecycle, ensuring only one instance runs
+     * and handling window closing events via the provided callback.
      *
-     * @param callback the callback
+     * @param callback A Runnable to be executed when the game stage is eventually closed
+     *                or if launch fails early. Must not be null.
      */
     public static void launchGame(final Runnable callback)
     {
-        if (staticPlayer1Name     == null ||
-            staticWordsForPlayer1 == null ||
-            staticWordsForPlayer2 == null ||
-            staticWordSet         == null)
+        Objects.requireNonNull(callback, "Callback cannot be null");
+
+        // Pre-check: Ensure all necessary static data from console setup is present.
+        if (staticPlayer1Name == null || staticPlayer1Name.isBlank() ||
+            staticPlayer2Name == null || staticPlayer2Name.isBlank() ||
+            staticWordsForPlayer1 == null || staticWordsForPlayer1.size() != TOTAL_ROUNDS ||
+            staticWordsForPlayer2 == null || staticWordsForPlayer2.size() != TOTAL_ROUNDS ||
+            staticWordSet == null || staticWordSet.isEmpty())
         {
-            System.err.println("Cannot launch game: " +
-                               "Pre-game setup data missing or incomplete.");
-
-            Objects.requireNonNull(callback,
-                                   "Callback cannot be null");
+            System.err.println("Cannot launch game: Pre-game setup data missing or incomplete.");
+            // Execute the callback immediately on the FX thread if setup data is bad
             Platform.runLater(callback);
-
             return;
         }
 
+        // Store the callback for later use when the stage closes.
         onCloseCallback = callback;
 
+        // Execute GUI launch logic on the JavaFX Application Thread.
         Platform.runLater(() ->
                           {
                               try
                               {
+                                  // If a stage is already showing, just bring it to the front.
                                   if (currentStage != null &&
                                       currentStage.isShowing())
                                   {
-                                      // make sure the stage is showing to the user
                                       currentStage.toFront();
-                                      return;
+                                      return; // Prevent creating a duplicate stage
                                   }
 
+                                  // If a previous stage existed but wasn't showing, close it first.
+                                  if (currentStage != null)
+                                  {
+                                      currentStage.close(); // Trigger its onHidden if set
+                                      currentStage = null;
+                                  }
+
+                                  // Create and configure the new game stage.
+                                  currentStage = new Stage();
+                                  currentStage.setTitle("Twisted Wordle");
+
+                                  // Set up the cleanup logic for when the stage is hidden/closed.
+                                  currentStage.setOnHidden((final WindowEvent event) ->
+                                                           {
+                                                               // Ensure this is the stage we think it is before nulling
+                                                               if (currentStage == event.getSource())
+                                                               {
+                                                                   currentStage = null; // Clear the static reference
+                                                               }
+
+                                                               // Execute the stored callback
+                                                               if (onCloseCallback != null)
+                                                               {
+                                                                   onCloseCallback.run();
+                                                               }
+                                                               else
+                                                               {
+                                                                   System.err.println("onCloseCallback was null when stage closed.");
+                                                               }
+                                                           });
+
+                                  // Instantiate the application and start the JavaFX lifecycle for it.
+                                  // This will call the start(Stage) method below.
+                                  new TwistedWordle().start(currentStage);
+
+                                  // Ensure the newly created stage is visible and focused.
+                                  currentStage.show(); // Show the stage first
+                                  currentStage.toFront(); // Then bring it to front
+
+                              } catch (final Exception e)
+                              {
+                                  // Catch potential exceptions during TwistedWordle().start() or stage setup.
+                                  System.err.println("Error launching Twisted Wordle GUI: " + e.getMessage());
+                                  e.printStackTrace(); // Log stack trace for debugging
+
+                                  // Ensure the callback is executed even if GUI launch fails.
+                                  if (onCloseCallback != null)
+                                  {
+                                      onCloseCallback.run();
+                                  }
+                                  // Attempt to close the potentially problematic stage if it was created
                                   if (currentStage != null)
                                   {
                                       currentStage.close();
                                   }
-
-                                  currentStage = new Stage();
-
-                                  currentStage.setTitle("Twisted Wordle");
-
-                                  currentStage.setOnHidden((final WindowEvent event) ->
-                                                           {
-                                                               if (currentStage == event.getSource())
-                                                               {
-                                                                   currentStage = null;
-                                                               }
-
-                                                               Objects.requireNonNull(onCloseCallback,
-                                                                                      "Callback cannot be null");
-                                                               onCloseCallback.run();
-                                                           });
-
-                                  new TwistedWordle().start(currentStage);
-
-                                  currentStage.toFront();
-
-                              } catch (final Exception e)
-                              {
-                                  e.printStackTrace();
-
-                                  Objects.requireNonNull(onCloseCallback,
-                                                         "Callback cannot be null");
-                                  onCloseCallback.run();
                               }
                           });
     }
 
     /**
-     * Overrides the JavaFX start method.
+     * The main entry point for the JavaFX application instance, called by
+     * `launch()` or `Platform.runLater()`.
+     * Initializes the primary stage, sets up player objects using the static data from console setup,
+     * initializes the game UI components, and starts the first turn.
+     * Handles potential exceptions during initialization and closes the stage if setup fails.
      *
-     * @param stage the stage for the UI
+     * @param stage The primary stage for this application instance, provided by the JavaFX framework.
+     *              Must not be null.
+     * @throws NullPointerException     if stage is null.
+     * @throws IllegalStateException    if required static data (words) is invalid.
+     * @throws IllegalArgumentException if player names from static data are invalid.
      */
     @Override
     public void start(final Stage stage)
     {
-        Objects.requireNonNull(stage,
-                               STAGE_MESSAGE);
+        Objects.requireNonNull(stage, STAGE_MESSAGE);
 
         this.primaryStage = stage;
+
+        // Set up cleanup for this specific stage instance.
         primaryStage.setOnHidden(e ->
                                  {
+                                     // Stop the timer if it's running when the window closes.
                                      if (timer != null)
                                      {
                                          timer.stop();
+                                         timer = null; // Release reference
                                      }
-
-                                     Objects.requireNonNull(onCloseCallback,
-                                                            "Callback cannot be null");
-                                     Platform.runLater(onCloseCallback);
+                                     // Execute the global onCloseCallback if it's set.
+                                     if (onCloseCallback != null)
+                                     {
+                                         // Ensure callback runs on FX thread if needed by callback's implementation.
+                                         Platform.runLater(onCloseCallback);
+                                     }
                                  });
 
-        primaryStage.toFront();
-        primaryStage.setTitle("Twisted Wordle");
+        // Ensure the stage is visible and focused.
+        // primaryStage.show(); // show() is called by launchGame now
+        primaryStage.toFront(); // Make sure it's the active window
+        primaryStage.setTitle("Twisted Wordle"); // Set title again just in case
 
-        // try to set up everything and start the game
         try
         {
+            // Create Player objects using factory and names from static setup data.
             player1 = PlayerFactory.createPlayer(staticPlayer1Name);
             player2 = PlayerFactory.createPlayer(staticPlayer2Name);
 
+            // Player 1 starts the first round.
             currentPlayer = player1;
 
+            // Validate the word lists obtained from static setup data again.
             validateWordsForPlayer(staticWordsForPlayer1);
             validateWordsForPlayer(staticWordsForPlayer2);
 
+            // Build the game's user interface.
             initializeGameUI(stage);
+
+            // Start the first turn of the game.
             startTurn(currentPlayer);
 
+        } catch (final IllegalArgumentException | IllegalStateException e)
+        {
+            // Catch specific setup errors (bad name, bad word list).
+            System.err.println("Failed to initialize game state: " + e.getMessage());
+            e.printStackTrace();
+            // Close the stage immediately if critical setup fails.
+            Platform.runLater(primaryStage::close);
         } catch (final Exception e)
         {
+            // Catch any other unexpected errors during startup.
+            System.err.println("An unexpected error occurred during game start: " + e.getMessage());
             e.printStackTrace();
-
-            Objects.requireNonNull(primaryStage,
-                                   STAGE_MESSAGE);
             Platform.runLater(primaryStage::close);
         }
     }
 
-    /**
-     * Sets up the main game UI elements.
-     *
-     * @param stage the stage for the UI
+    /*
+     * Sets up the primary graphical user interface elements for the game.
+     * Creates the grid, input field, buttons, and labels, arranges them in layouts,
+     * and sets the scene on the provided stage.
+     * Initializes game state variables like attemptsLeft and currentRound.
      */
     private void initializeGameUI(final Stage stage)
     {
-        Objects.requireNonNull(stage,
-                               STAGE_MESSAGE);
-
+        // Initialize game state for the very beginning
         attemptsLeft = MAX_ATTEMPTS;
         currentRound = FIRST_ROUND;
 
+        // Create the main grid for displaying guesses
         final GridPane gridPane;
         gridPane = new GridPane();
-
         gridPane.setAlignment(Pos.CENTER);
-        gridPane.setHgap(10);
-        gridPane.setVgap(10);
-        gridPane.setPadding(new Insets(20));
+        gridPane.setHgap(10); // Horizontal gap between cells
+        gridPane.setVgap(10); // Vertical gap between cells
+        gridPane.setPadding(new Insets(20)); // Padding around the grid
         gridLabels = new Label[MAX_ATTEMPTS][WORD_LENGTH];
 
-        // set all the squares to blank
+        // Initialize each cell in the grid as an empty Label
         for (int row = 0; row < MAX_ATTEMPTS; row++)
         {
             for (int col = 0; col < WORD_LENGTH; col++)
             {
                 final Label label;
-                label = new Label("");
+                label = new Label(""); // Start empty
 
-                label.setFont(Font.font(20));
-                label.setMinSize(40, 40);
-                label.setAlignment(Pos.CENTER);
-                label.setStyle("-fx-border-color: black; " +
-                               "-fx-border-width: 2;");
-                gridLabels[row][col] = label;
-                gridPane.add(label, col, row);
+                label.setFont(Font.font(20)); // Set font size
+                label.setMinSize(40, 40);     // Ensure square cells
+                label.setAlignment(Pos.CENTER); // Center text within the label
+                // Initial styling: black border
+                label.setStyle("-fx-border-color: black; -fx-border-width: 2;");
+                gridLabels[row][col] = label;  // Store reference
+                gridPane.add(label, col, row); // Add to GridPane at column `col`, row `row`
             }
         }
 
+        // Create the input field for guesses
         inputField = new TextField();
         inputField.setFont(Font.font(20));
-        inputField.setMaxWidth(200);
-        inputField.setDisable(true);
+        inputField.setMaxWidth(200); // Limit width
+        inputField.setPromptText("Enter guess..."); // Placeholder text
+        inputField.setDisable(true); // Initially disabled until a turn starts
+        // Add event handler for pressing Enter key
         inputField.setOnKeyPressed(e ->
                                    {
                                        if (e.getCode() == KeyCode.ENTER)
                                        {
-                                           handleGuess();
+                                           handleGuess(); // Process guess on Enter
                                        }
                                    });
 
-        // the button for guessing
+        // Create the submit button for guesses
         final Button submitButton;
         submitButton = new Button("Guess");
-
-        submitButton.setDisable(true);
-        submitButton.setOnAction(e -> handleGuess());
+        submitButton.setDisable(true); // Initially disabled
+        submitButton.setOnAction(e -> handleGuess()); // Process guess on button click
+        // Bind the button's disable state to the input field's disable state
         submitButton.disableProperty().bind(inputField.disabledProperty());
 
-        // initialize the info for the game
+        // Arrange input field and button horizontally
         final HBox inputBox;
-        inputBox = new HBox(10, inputField, submitButton);
-
+        inputBox = new HBox(10, inputField, submitButton); // 10px spacing
         inputBox.setAlignment(Pos.CENTER);
-        messageLabel = new Label("Initializing...");
+
+        // Create labels for displaying game information
+        messageLabel = new Label("Initializing..."); // Status messages
         messageLabel.setFont(Font.font(20));
-        timerLabel = new Label("Time left: --");
+        timerLabel = new Label("Time left: --"); // Turn timer display
         timerLabel.setFont(Font.font(20));
+        // Initial score display (scores start at 0)
         scoreLabel = new Label("Scores: " +
                                player1.getName() +
                                ": 0 | " +
                                player2.getName() +
                                ": 0");
         scoreLabel.setFont(Font.font(20));
+        // Initial round display
         roundLabel = new Label("Round: " +
                                currentRound +
                                " of " +
                                TOTAL_ROUNDS);
         roundLabel.setFont(Font.font(20));
 
+        // Create the main vertical layout container
         final VBox root;
-        root = new VBox(20,
+        root = new VBox(20, // 20px vertical spacing between elements
                         gridPane,
                         inputBox,
                         messageLabel,
                         timerLabel,
                         scoreLabel,
                         roundLabel);
+        root.setAlignment(Pos.CENTER); // Center elements vertically
+        root.setPadding(new Insets(20)); // Padding around the entire layout
 
-        root.setAlignment(Pos.CENTER);
-        root.setPadding(new Insets(20));
-
+        // Create the scene with the root layout and set dimensions
         final Scene scene;
-        scene = new Scene(root, 600, 700);
+        scene = new Scene(root, 600, 700); // Width, Height
 
+        // Set the scene on the stage
         stage.setScene(scene);
-        stage.show();
+        // Stage is shown by the caller (launchGame or Application.launch)
+        // stage.show();
     }
 
-    /**
-     * Handles the submission and evaluation of a guess.
+    /*
+     * Handles the logic when the player submits a guess (via Enter key or button).
+     * Validates the guess length, compares it against the target word,
+     * updates the grid UI with appropriate colors (green, yellow, gray),
+     * decrements attemptsLeft, and checks for win/loss conditions for the current turn.
+     * Triggers score calculation and prepares the next turn or ends the game if necessary.
      */
     private void handleGuess()
     {
         final String guess;
-        guess = inputField.getText().toUpperCase();
+        guess = inputField.getText().trim().toUpperCase(); // Trim and convert to uppercase
 
-        inputField.clear();
+        inputField.clear(); // Clear input field after retrieving guess
 
+        // 1. Validate Guess Length
         if (guess.length() != WORD_LENGTH)
         {
-            messageLabel.setText("Please enter a 5-letter word.");
+            messageLabel.setText("Please enter a " + WORD_LENGTH + "-letter word.");
+            return; // Stop processing if length is wrong
+        }
+
+        // 2. Prepare for Grid Update
+        final int       currentAttempt; // Row index for the current guess
+        final boolean[] targetMatched;  // Tracks if target letter positions are matched (green/yellow)
+        final boolean[] guessMatched;   // Tracks if guess letter positions are matched (green/yellow)
+
+        currentAttempt = MAX_ATTEMPTS - attemptsLeft; // Calculate row (0-indexed)
+        // Check for valid row index, though attemptsLeft logic should prevent out-of-bounds
+        if (currentAttempt < 0 || currentAttempt >= MAX_ATTEMPTS)
+        {
+            System.err.println("Error: Invalid attempt index calculated: " + currentAttempt);
+            messageLabel.setText("Internal error. Please restart.");
+            inputField.setDisable(true); // Prevent further input
             return;
         }
 
-        final int       currentAttempt;
-        final boolean[] targetMatched;
-        final boolean[] guessMatched;
+        targetMatched = new boolean[WORD_LENGTH];
+        guessMatched  = new boolean[WORD_LENGTH];
 
-        currentAttempt = MAX_ATTEMPTS - attemptsLeft;
-        targetMatched  = new boolean[WORD_LENGTH];
-        guessMatched   = new boolean[WORD_LENGTH];
-
-        // first pass for green letters
+        // 3. First Pass: Check for Correct Letters in Correct Positions (Green)
         for (int i = 0; i < WORD_LENGTH; i++)
         {
-            gridLabels[currentAttempt][i].setText(String.valueOf(guess.charAt(i)));
+            final char  guessedChar  = guess.charAt(i);
+            final char  targetChar   = targetWord.charAt(i);
+            final Label currentLabel = gridLabels[currentAttempt][i];
 
-            if (guess.charAt(i) == targetWord.charAt(i))
+            currentLabel.setText(String.valueOf(guessedChar)); // Display the guessed letter
+
+            if (guessedChar == targetChar)
             {
-                gridLabels[currentAttempt][i].setStyle("-fx-background-color: #6aaa64; " +
-                                                       "-fx-text-fill: white; " +
-                                                       "-fx-border-color: #444; " +
-                                                       "-fx-border-width: 1;");
-                targetMatched[i] = true;
-                guessMatched[i]  = true;
+                // Correct letter, correct position (Green)
+                currentLabel.setStyle("-fx-background-color: #6aaa64; " + // Green background
+                                      "-fx-text-fill: white; " +          // White text
+                                      "-fx-border-color: #444; " +         // Darker border
+                                      "-fx-border-width: 1;");
+                targetMatched[i] = true; // Mark target position as matched
+                guessMatched[i]  = true;  // Mark guess position as matched
             }
             else
             {
-                gridLabels[currentAttempt][i].setStyle("-fx-background-color: #787c7e; " +
-                                                       "-fx-text-fill: white; " +
-                                                       "-fx-border-color: #444; " +
-                                                       "-fx-border-width: 1;");
+                // Initially assume incorrect (Gray) - may change to yellow in the second pass
+                currentLabel.setStyle("-fx-background-color: #787c7e; " + // Gray background
+                                      "-fx-text-fill: white; " +          // White text
+                                      "-fx-border-color: #444; " +         // Darker border
+                                      "-fx-border-width: 1;");
             }
         }
 
-        // second pass for yellow letters
-        for (int i = 0; i < WORD_LENGTH; i++)
+        // 4. Second Pass: Check for Correct Letters in Wrong Positions (Yellow)
+        for (int i = 0; i < WORD_LENGTH; i++) // Iterate through guess letters
         {
-            if (!guessMatched[i])
+            if (!guessMatched[i]) // Only check letters not already marked green
             {
-                char guessedChar = guess.charAt(i);
+                char  guessedChar  = guess.charAt(i);
+                Label currentLabel = gridLabels[currentAttempt][i];
 
-                for (int j = 0; j < WORD_LENGTH; j++)
+                // Check against unmatched target letters
+                for (int j = 0; j < WORD_LENGTH; j++) // Iterate through target letters
                 {
+                    // If target letter at j is not already matched (green/yellow)
+                    // and the current guessed letter matches it
                     if (!targetMatched[j] && guessedChar == targetWord.charAt(j))
                     {
-                        gridLabels[currentAttempt][i].setStyle("-fx-background-color: #c9b458; " +
-                                                               "-fx-text-fill: white; " +
-                                                               "-fx-border-color: #444;" +
-                                                               " -fx-border-width: 1;");
-                        targetMatched[j] = true;
-                        guessMatched[i]  = true;
-                        break;
+                        // Correct letter, wrong position (Yellow)
+                        currentLabel.setStyle("-fx-background-color: #c9b458; " + // Yellow background
+                                              "-fx-text-fill: white; " +          // White text
+                                              "-fx-border-color: #444;" +          // Darker border
+                                              " -fx-border-width: 1;");
+                        targetMatched[j] = true; // Mark this target letter position as used for yellow
+                        guessMatched[i]  = true;  // Mark this guess letter as matched (yellow)
+                        break; // Stop checking target letters for this guessed char once a yellow match is found
                     }
                 }
+                // If loop finishes and guessMatched[i] is still false, it remains gray
             }
         }
 
+        // 5. Update Game State
         attemptsLeft--;
 
-        if (guess.equals(targetWord))
+        // 6. Check Win/Loss Conditions for the Turn
+        if (guess.equals(targetWord)) // Player guessed correctly
         {
             if (timer != null)
             {
-                timer.stop();
+                timer.stop(); // Stop the turn timer
             }
 
+            // Calculate score based on remaining attempts and time
             final long elapsedTime;
             final int  timeLeft;
             final int  score;
 
-            elapsedTime = (System.currentTimeMillis() - startTime) / TIME_FORMAT;
-            timeLeft    = Math.max(NOTHING, TURN_TIME - (int) elapsedTime);
-            score       = calculateScore(attemptsLeft + OFFSET, timeLeft);
+            elapsedTime = (System.currentTimeMillis() - startTime) / TIME_FORMAT; // Time in seconds
+            timeLeft    = Math.max(NOTHING, TURN_TIME - (int) elapsedTime); // Ensure non-negative time
+            // Score includes points for attempts left *before* this successful guess
+            score = calculateScore(attemptsLeft + OFFSET, timeLeft);
 
-            currentPlayer.addScore(score);
+            currentPlayer.addScore(score); // Add score to the current player
 
             messageLabel.setText("Correct! " +
                                  currentPlayer.getName() +
                                  " guessed the word!");
 
-            inputField.setDisable(true);
-            updateScoreboard();
+            inputField.setDisable(true); // Disable input until next turn
+            updateScoreboard(); // Display updated scores
 
+            // Pause briefly before moving to the next turn/round
             final PauseTransition delay;
             delay = new PauseTransition(Duration.seconds(DELAY));
-
             delay.setOnFinished(e -> Platform.runLater(this::prepareNextTurn));
             delay.play();
         }
-        else if (attemptsLeft == NOTHING)
+        else if (attemptsLeft == NOTHING) // Player ran out of attempts
         {
             if (timer != null)
             {
-                timer.stop();
+                timer.stop(); // Stop the turn timer
             }
 
             messageLabel.setText("Out of attempts! The word was: " +
-                                 targetWord);
-            inputField.setDisable(true);
+                                 targetWord); // Reveal the word
+            inputField.setDisable(true); // Disable input
 
+            // Pause briefly before moving to the next turn/round
             final PauseTransition delay;
             delay = new PauseTransition(Duration.seconds(DELAY));
-
             delay.setOnFinished(e -> Platform.runLater(this::prepareNextTurn));
             delay.play();
         }
-        else
+        else // Guess was incorrect, but attempts remain
         {
             messageLabel.setText(currentPlayer.getName() +
                                  ", attempts left: " +
-                                 attemptsLeft);
+                                 attemptsLeft); // Update attempt count message
+            // Input field remains enabled for the next guess
         }
     }
 
     /**
-     * Prepares for the next turn
+     * Prepares the game state for the next turn or ends the game if all rounds are completed.
+     * Stops the current timer, determines the next player, increments the round counter if necessary,
+     * and either calls Player for the next player or endGame().
+     * This method ensures a clean transition between player turns or rounds.
      */
     public void prepareNextTurn()
     {
+        // Stop the timer for the completed turn, if it's running
         if (timer != null)
         {
             timer.stop();
+            timer = null; // Clear the timer reference
         }
-        timer = null;
-
+        // Reset timer label display
         timerLabel.setText("Time left: --");
 
         final Player nextPlayer;
 
+        // Determine who plays next
         if (currentPlayer == player1)
         {
-            nextPlayer = player2;
+            nextPlayer = player2; // Switch to Player 2
         }
-        else
+        else // Current player was Player 2
         {
-            nextPlayer = player1;
-            currentRound++;
+            nextPlayer = player1; // Switch back to Player 1
+            currentRound++; // Increment round number after Player 2's turn
 
+            // Check if the game should end
             if (currentRound > TOTAL_ROUNDS)
             {
-                endGame();
-                return;
+                endGame(); // All rounds completed
+                return;    // Stop further turn processing
             }
 
+            // Update round label display for the new round
             roundLabel.setText("Round: " + currentRound +
                                " of " + TOTAL_ROUNDS);
         }
 
+        // Start the turn for the determined next player
         startTurn(nextPlayer);
     }
 
-    /**
-     * Starts the actual guessing turn for the player.
-     *
-     * @param player the player who is guessing
+    /*
+     * Initializes and starts a new turn for the specified player.
+     * Sets the current player, resets attemptsLeft, determines the target word for the player
+     * based on the current round, resets the UI grid, updates info labels (message, score, round),
+     * enables the input field, and starts the turn timer.
      */
     private void startTurn(final Player player)
     {
-        Objects.requireNonNull(player,
-                               "Player cannot be null");
-
+        // Set the active player for this turn
         currentPlayer = player;
-        attemptsLeft  = MAX_ATTEMPTS;
+        attemptsLeft  = MAX_ATTEMPTS; // Reset guess attempts
 
+        // Determine the correct target word for this player and round
         int roundIndex;
-        roundIndex = currentRound - FIRST_ROUND;
+        roundIndex = currentRound - FIRST_ROUND; // 0-based index for list access
 
         final List<String> wordListForThisPlayer;
 
-        // make sure we are assigning the correct
-        // word list for each player
+        // Select the word list chosen by the *opponent*
         if (currentPlayer == player1)
         {
+            // Player 1 guesses words chosen by Player 2 (stored in staticWordsForPlayer1)
             wordListForThisPlayer = staticWordsForPlayer1;
         }
-        else
+        else // currentPlayer is player2
         {
+            // Player 2 guesses words chosen by Player 1 (stored in staticWordsForPlayer2)
             wordListForThisPlayer = staticWordsForPlayer2;
         }
 
+        // Validate that the word list and round index are valid
         if (wordListForThisPlayer == null ||
             roundIndex < NOTHING ||
             roundIndex >= wordListForThisPlayer.size())
         {
-            endGame();
+            // This indicates a setup error or logic flaw
+            System.err.println("Error starting turn: Invalid word list or round index. Player: "
+                               + player.getName() + ", Round: " + currentRound + ", Index: " + roundIndex);
+            messageLabel.setText("Error: Could not load word for this round.");
+            inputField.setDisable(true);
+            endGame(); // Terminate the game due to the error
             return;
         }
 
+        // Set the target word for this turn
         targetWord = wordListForThisPlayer.get(roundIndex);
-        resetGrid();
+        // Defensive check: Ensure the word itself is valid (though should be pre-validated)
+        if (targetWord == null || targetWord.length() != WORD_LENGTH)
+        {
+            System.err.println("Error starting turn: Invalid target word loaded: " + targetWord);
+            messageLabel.setText("Error: Invalid word loaded for this round.");
+            inputField.setDisable(true);
+            endGame();
+            return;
+        }
+        // System.out.println("Debug: " + currentPlayer.getName() + "'s target word for round " + currentRound + " is " + targetWord); // DEBUG ONLY
 
-        // display the guess prompt
+
+        // Prepare the UI for the new turn
+        resetGrid(); // Clear the guess grid display
+
+        // Display turn prompt
         messageLabel.setText(currentPlayer.getName() +
-                             ", guess the 5-letter word! (" +
+                             ", guess the " + WORD_LENGTH + "-letter word! (" +
                              MAX_ATTEMPTS + " attempts)");
 
-        inputField.setDisable(false);
+        inputField.setDisable(false); // Enable the input field
 
+        // Request focus on the input field so the player can type immediately
         Platform.runLater(() -> inputField.requestFocus());
-        updateScoreboard();
 
+        updateScoreboard(); // Ensure scoreboard is current
+
+        // Update round label (might be redundant if called in prepareNextTurn, but safe)
         roundLabel.setText("Round: " + currentRound +
                            " of " + TOTAL_ROUNDS);
-        startTimer();
+
+        startTimer(); // Start the timer for this turn
     }
 
-    /**
-     * Resets the guess grid UI.
+    /*
+     * Resets the visual appearance of the Wordle grid UI.
+     * Clears the text and resets the background color and border style
+     * for all label cells in the gridLabels array, preparing it for a new turn.
      */
     private void resetGrid()
     {
-        // set all squares to blank
+        // Iterate through each row and column of the grid
         for (int row = 0; row < MAX_ATTEMPTS; row++)
         {
             for (int col = 0; col < WORD_LENGTH; col++)
             {
+                // Clear the text content of the label
                 gridLabels[row][col].setText("");
+                // Reset the style to the default appearance (transparent background, black border)
                 gridLabels[row][col].setStyle("-fx-border-color: black; " +
                                               "-fx-border-width: 2; " +
                                               "-fx-background-color: transparent;");
@@ -787,205 +962,267 @@ public final class TwistedWordle
     }
 
     /**
-     * Calculates score based on attempts and time.
+     * Calculates the score awarded for a correct guess based on the number
+     * of attempts remaining *before* the guess and the time left on the turn timer.
+     * The score is calculated as: Base Score + (Attempts Left * Multiplier) + Time Left.
      *
-     * @param attemptsLeftBeforeGuess attempts the player had unused
-     * @param timeLeft                time left
+     * @param attemptsLeftBeforeGuess The number of attempts the player had remaining
+     *                                *before* making the correct guess (must be non-negative).
+     * @param timeLeft                The time in seconds remaining on the timer when the
+     *                                guess was made (must be non-negative).
+     * @return The calculated score as an integer.
+     * @throws IllegalArgumentException if attemptsLeftBeforeGuess or timeLeft are negative.
      */
     @Override
     public int calculateScore(final int attemptsLeftBeforeGuess,
                               final int timeLeft)
     {
+        // Validate inputs
         validateNumberForCalculation(attemptsLeftBeforeGuess);
         validateNumberForCalculation(timeLeft);
 
         int attemptsScore;
 
+        // Calculate points based on remaining attempts (more attempts left = higher score)
         if (attemptsLeftBeforeGuess > NOTHING)
         {
+            // Note: uses attempts *before* the guess, so a guess on the last try (attemptsLeft=0 after guess)
+            // corresponds to attemptsLeftBeforeGuess = 1 here.
             attemptsScore = attemptsLeftBeforeGuess * ATTEMPTS_LEFT_MULTIPLIER;
         }
         else
         {
+            // Should not happen if called on a correct guess, but defensively set to 0.
+            // If called when attempts ran out, attemptsLeftBeforeGuess would be 0 here.
             attemptsScore = NOTHING;
         }
+
+        // Total score combines base points, attempt bonus, and time bonus.
+        // Math.max ensures time component isn't negative if timeLeft somehow becomes < 0.
         return BASE_CORRECT_SCORE + attemptsScore + Math.max(NOTHING, timeLeft);
     }
 
     /*
-     * Validates a number for score calculation
+     * Validates that a number used in score calculation is not negative.
+     * Throws an IllegalArgumentException if the number is negative.
      */
     private static void validateNumberForCalculation(final int num)
     {
         if (num < NOTHING)
         {
-            throw new IllegalArgumentException("Number for calculation cannot be negative");
+            throw new IllegalArgumentException("Number for score calculation cannot be negative: " + num);
         }
     }
 
-    /**
-     * Updates the score display label.
+    /*
+     * Updates the text of the scoreLabel UI element to reflect the
+     * current scores stored in the player1 and player2 objects.
      */
     private void updateScoreboard()
     {
-        scoreLabel.setText("Scores: " +
-                           player1.getName() + ": " +
-                           player1.getScore() + " | " +
-                           player2.getName() + ": " +
-                           player2.getScore());
+        // Ensure player objects are not null before accessing properties
+        if (player1 != null && player2 != null && scoreLabel != null)
+        {
+            scoreLabel.setText("Scores: " +
+                               player1.getName() + ": " + player1.getScore() +
+                               " | " + // Separator
+                               player2.getName() + ": " + player2.getScore());
+        }
+        else
+        {
+            System.err.println("Error updating scoreboard: Player or label object is null.");
+        }
     }
 
-    /**
-     * Starts the turn timer animation.
+    /*
+     * Initializes and starts the AnimationTimer for the current player's turn.
+     * Records the start time and updates the timerLabel UI element each frame
+     * with the remaining time. If time runs out, it stops the timer, updates
+     * the message label, disables input, and triggers the transition to the next turn.
      */
     private void startTimer()
     {
+        // Stop any existing timer before starting a new one
         if (timer != null)
         {
             timer.stop();
         }
 
+        // Record the system time when the timer starts
         startTime = System.currentTimeMillis();
 
+        // Create a new AnimationTimer instance
         timer = new AnimationTimer()
         {
             /**
-             * Anonymous inner class to handle the start of the timer.
-             * @param now the current time in long form
+             * Handles the timer tick event, called by the JavaFX framework on each frame.
+             * Calculates elapsed time, updates the timer display, and checks if time has run out.
+             * @param now The current timestamp in nanoseconds, provided by the framework.
              */
             @Override
-            public void handle(final long now)
+            public void handle(final long now) // 'now' parameter is typically unused when using System.currentTimeMillis
             {
-                final long elapsedTime;
-                final int  timeLeft;
+                final long elapsedTime; // Elapsed time in seconds
+                final int  timeLeft;    // Remaining time in seconds
 
-                elapsedTime = (System.currentTimeMillis() - startTime) / TIME_FORMAT;
-                timeLeft    = TURN_TIME - (int) elapsedTime;
+                // Calculate elapsed time since startTime
+                elapsedTime = (System.currentTimeMillis() - startTime) / TIME_FORMAT; // Convert ms to s
+                // Calculate remaining time, ensuring it doesn't go below zero
+                timeLeft = Math.max(NOTHING, TURN_TIME - (int) elapsedTime);
 
-                // time is up
+                // Check if the player's time is up
                 if (timeLeft <= NOTHING)
                 {
-                    timerLabel.setText("Time left: 0");
+                    timerLabel.setText("Time left: 0"); // Display 0 time left
 
-                    // stop the timer
-                    this.stop();
-                    timer = null;
+                    this.stop(); // Stop this AnimationTimer
+                    timer = null; // Clear the timer reference
 
+                    // Update UI to indicate time's up
                     messageLabel.setText("Time's up, " + currentPlayer.getName() +
-                                         "! The word was: " + targetWord);
-                    inputField.setDisable(true);
+                                         "! The word was: " + targetWord); // Reveal word
+                    inputField.setDisable(true); // Disable guessing
 
+                    // Pause briefly before moving to the next turn
                     final PauseTransition delay;
                     delay = new PauseTransition(Duration.seconds(DELAY));
-
+                    // Use Platform.runLater if prepareNextTurn modifies UI from a non-FX thread context,
+                    // though AnimationTimer's handle() runs on the FX thread. Safer to keep it.
                     delay.setOnFinished(e -> Platform.runLater(
                             TwistedWordle.this::prepareNextTurn));
                     delay.play();
                 }
-                else
+                else // Time still remaining
                 {
+                    // Update the timer label display
                     timerLabel.setText("Time left: " + timeLeft);
                 }
             }
         };
 
+        // Start the timer loop
         timer.start();
     }
 
-    /**
-     * Ends the game, stops timers, shows final scores.
+    /*
+     * Handles the end of the game logic.
+     * Stops the game timer if it's running, disables the input field,
+     * updates the message label to indicate game over, ensures the final scores
+     * are displayed, and triggers the display of the winner popup window.
      */
     private void endGame()
     {
+        // Stop the turn timer if it's active
         if (timer != null)
         {
             timer.stop();
+            timer = null; // Clear reference
         }
-        timer = null;
 
+        // Update UI elements for game over state
         messageLabel.setText("Game over! Final scores:");
-        inputField.setDisable(true);
+        inputField.setDisable(true); // Disable further input
+        timerLabel.setText("Time left: --"); // Clear timer display
+
+        // Ensure the final scores are displayed correctly
         updateScoreboard();
+
+        // Show the winner/tie popup window on the JavaFX Application Thread
         Platform.runLater(this::showWinnerPopup);
     }
 
-    /**
-     * Shows the final winner/tie popup.
+    /*
+     * Creates and displays a modal popup window (dialog) showing the final scores
+     * and declaring the winner or a tie based on the scores.
+     * The popup includes a button to close the popup and the main game window.
      */
     private void showWinnerPopup()
     {
+        // Create a new stage for the popup
         final Stage popupStage;
         popupStage = new Stage();
 
-        popupStage.initModality(Modality.APPLICATION_MODAL);
-        popupStage.initOwner(primaryStage);
-        popupStage.initStyle(StageStyle.UTILITY);
+        // Configure popup properties
+        popupStage.initModality(Modality.APPLICATION_MODAL); // Blocks interaction with the main game window
+        popupStage.initOwner(primaryStage); // Set the main game window as the owner
+        popupStage.initStyle(StageStyle.UTILITY); // Simple window style without minimize/maximize
         popupStage.setTitle("Game Over");
 
+        // Determine the winner message
         final String winnerMessage;
-
-        if (player1.getScore() > player2.getScore())
+        // Ensure players are not null before comparing scores
+        if (player1 == null || player2 == null)
         {
-            winnerMessage = player1.getName() +
-                            " wins!";
+            System.err.println("Cannot determine winner: Player objects are null.");
+            winnerMessage = "Error determining winner.";
+        }
+        else if (player1.getScore() > player2.getScore())
+        {
+            winnerMessage = player1.getName() + " wins!";
         }
         else if (player2.getScore() > player1.getScore())
         {
-            winnerMessage = player2.getName() +
-                            " wins!";
+            winnerMessage = player2.getName() + " wins!";
         }
-        else
+        else // Scores are equal
         {
             winnerMessage = "It's a tie!";
         }
 
-        // the final label for the score
+        // Create labels for displaying scores and the winner message
         final Label finalScoreLabel;
-        finalScoreLabel = new Label(player1.getName() + ": " +
-                                    player1.getScore() + "\n" +
-                                    player2.getName() + ": " +
-                                    player2.getScore());
-
-        finalScoreLabel.setFont(Font.font(16));
+        // Handle potential null players for score display
+        final String scoreText = (player1 != null && player2 != null)
+                                 ? player1.getName() + ": " + player1.getScore() + "\n" +
+                                   player2.getName() + ": " + player2.getScore()
+                                 : "Scores unavailable.";
+        finalScoreLabel = new Label(scoreText);
+        finalScoreLabel.setFont(Font.font(16)); // Set font size for scores
 
         final Label winnerLabel;
         winnerLabel = new Label(winnerMessage);
+        winnerLabel.setFont(Font.font(20)); // Larger font for winner message
+        winnerLabel.setStyle("-fx-font-weight: bold;"); // Make winner message bold
 
-        winnerLabel.setFont(Font.font(20));
-        winnerLabel.setStyle("-fx-font-weight: bold;");
-
+        // Create a button to close the popup and the main game
         final Button closeButton;
         closeButton = new Button("Close Game");
 
-        // close the game window
+        // Define action for the close button
         closeButton.setOnAction(e ->
                                 {
-                                    popupStage.close();
+                                    popupStage.close(); // Close the popup window
 
-                                    if (primaryStage != null)
+                                    // Close the main game stage if it's still open
+                                    if (primaryStage != null && primaryStage.isShowing())
                                     {
-                                        primaryStage.close();
+                                        primaryStage.close(); // This will trigger the onHidden handler set in start()
                                     }
-
-                                    if (onCloseCallback != null)
-                                    {
-                                        Platform.runLater(onCloseCallback);
-                                    }
+                                    // Explicitly run callback if primaryStage was already closed or null?
+                                    // The onHidden handler should cover the primary scenario.
+                                    // If primaryStage is null, the callback might need manual trigger here,
+                                    // but that suggests an issue elsewhere.
+//                                    else if (onCloseCallback != null) {
+//                                         Platform.runLater(onCloseCallback); // Failsafe?
+//                                    }
                                 });
 
+        // Arrange the labels and button vertically in the popup
         final VBox popupLayout;
-        popupLayout = new VBox(15,
+        popupLayout = new VBox(15, // 15px vertical spacing
                                finalScoreLabel,
                                winnerLabel,
                                closeButton);
+        popupLayout.setAlignment(Pos.CENTER); // Center elements horizontally
+        popupLayout.setPadding(new Insets(25)); // Padding around the content
 
-        popupLayout.setAlignment(Pos.CENTER);
-        popupLayout.setPadding(new Insets(25));
-
+        // Create the scene for the popup window
         final Scene popupScene;
-        popupScene = new Scene(popupLayout, 350, 200);
+        popupScene = new Scene(popupLayout, 350, 200); // Width, Height
 
+        // Set the scene on the popup stage and display it
         popupStage.setScene(popupScene);
+        // Show the popup and wait for it to be closed before continuing
         popupStage.showAndWait();
     }
 }

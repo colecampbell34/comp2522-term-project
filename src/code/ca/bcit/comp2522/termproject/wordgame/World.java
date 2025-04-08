@@ -1,6 +1,7 @@
 package ca.bcit.comp2522.termproject.wordgame;
 
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Represents every country in the world.
@@ -10,5 +11,8 @@ import java.util.HashMap;
  */
 public final class World
 {
-    public static final HashMap<String, Country> worldMap = new HashMap<>();
+    /**
+     * A map of all countries in the world, keyed by country name.
+     */
+    public static final Map<String, Country> worldMap = new HashMap<>();
 }

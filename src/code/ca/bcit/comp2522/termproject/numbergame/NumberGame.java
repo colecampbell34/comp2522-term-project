@@ -16,8 +16,19 @@ import java.util.Optional;
 import java.util.Random;
 
 /**
- * The Number Game implementation. Sets up and manages the game UI and logic.
- * Players win if they successfully place all 20 numbers in ascending order.
+ * A JavaFX-based mini-game where the player places 20 randomly generated numbers
+ * onto a 5x4 grid. The numbers must be placed in strictly ascending order from left
+ * to right, top to bottom. The game ends in a win if all numbers are placed legally,
+ * or in a loss if an illegal placement is made or no valid placements remain.
+ *
+ * This class is responsible for managing both the UI and the core game logic, including:
+ * - UI layout with JavaFX components
+ * - Random number generation
+ * - Validation of player moves
+ * - Tracking of game state and score
+ * - Displaying alerts for win/loss conditions
+ *
+ * This game extends AbstractGame and follows the game interface/structure of the overall project.
  *
  * @author colecampbell
  * @version 1.0
@@ -43,9 +54,11 @@ public final class NumberGame extends AbstractGame
     private final int[]      gameBoard = new int[MAX_PLACEMENTS];
 
     /**
-     * Constructs a NumberGame object and sets up its UI on the provided Stage.
+     * Constructs the NumberGame and initializes the user interface on the provided JavaFX Stage.
+     * This sets up the game layout, binds button actions, and displays the initial screen to the user.
      *
-     * @param stage The JavaFX Stage on which this game will be displayed.
+     * @param stage the primary JavaFX Stage where the NumberGame UI will be shown
+     * @throws NullPointerException if the provided stage is null
      */
     public NumberGame(final Stage stage)
     {
@@ -59,7 +72,12 @@ public final class NumberGame extends AbstractGame
     }
 
     /*
-     * Sets up the UI for the number game.
+     * Creates and arranges all JavaFX UI components for the game screen.
+     * This includes:
+     * - A 5x4 grid of buttons representing the game board
+     * - A status label displaying instructions and messages
+     * - "Start New Game" and "Quit" buttons
+     * All UI actions are connected to corresponding game logic methods.
      */
     private void setupUI()
     {
@@ -115,7 +133,9 @@ public final class NumberGame extends AbstractGame
     }
 
     /**
-     * Starts or restarts the game logic and UI.
+     * Starts a new game session by resetting game logic, UI, and the first random number.
+     * This method also checks whether the first number can be placed legally; if not, the game
+     * ends immediately with a loss.
      */
     @Override
     public void startGame()
@@ -139,8 +159,9 @@ public final class NumberGame extends AbstractGame
         // If we get here, the game starts normally, statusLabel set by generateNextNumber
     }
 
-    /**
-     * Resets the game board logic array.
+    /*
+     * Clears the internal game board state and resets the current number to EMPTY_SPOT.
+     * This method does not update or modify the UI.
      */
     private void resetLogicOnly()
     {
@@ -148,8 +169,9 @@ public final class NumberGame extends AbstractGame
         setCurrentNumber(EMPTY_SPOT);
     }
 
-    /**
-     * Resets the UI elements to their initial state.
+    /*
+     * Resets all buttons in the game grid to their default appearance ("[ ]" and enabled),
+     * and updates the status label to indicate that the game has started.
      */
     private void resetUI()
     {
@@ -164,8 +186,11 @@ public final class NumberGame extends AbstractGame
         statusLabel.setText("Game started! Place the first number.");
     }
 
-    /**
-     * Generates the next number to be placed and updates the status label.
+    /*
+     * Generates a new random number within the predefined bounds (1 to 1000),
+     * updates the internal current number, and refreshes the status label
+     * to prompt the player to place it on the board.
+     * If the game is not active, no number is generated.
      */
     private void generateNextNumber()
     {
@@ -184,8 +209,11 @@ public final class NumberGame extends AbstractGame
         statusLabel.setText("Place the number: " + getCurrentNumber());
     }
 
-    /**
-     * Handles clicks on the grid buttons.
+    /*
+     * Responds to player clicks on grid buttons by attempting to place the current number
+     * at the selected location. It validates placement legality based on ascending order rules.
+     * If the placement is valid, the number is placed and a new number is generated.
+     * If the move is illegal or if no more valid moves exist, the game ends.
      */
     private void handleGridButtonClick(final int row,
                                        final int col)
@@ -250,7 +278,8 @@ public final class NumberGame extends AbstractGame
     }
 
     /*
-     * Validates that the row is within bounds.
+     * Ensures the given row index is within the bounds of the game grid.
+     * Throws IllegalArgumentException if the row is invalid.
      */
     private static void validateRow(final int row)
     {
@@ -262,7 +291,8 @@ public final class NumberGame extends AbstractGame
     }
 
     /*
-     * Validates that the column is within bounds.
+     * Ensures the given column index is within the bounds of the game grid.
+     * Throws IllegalArgumentException if the column is invalid.
      */
     private static void validateCol(final int col)
     {
@@ -273,14 +303,12 @@ public final class NumberGame extends AbstractGame
         }
     }
 
-    /**
-     * Checks if a number can be legally placed at the given 1D index based on
-     * all other placed numbers. Numbers must maintain strictly increasing order
-     * across the flattened board (left-to-right, top-to-bottom).
-     *
-     * @param index  The 1D array index where placement is attempted.
-     * @param number The number to place.
-     * @return true if placement is legal, false otherwise.
+    /*
+     * Determines whether a given number can be legally placed at the specified
+     * 1D board index. Placement rules require:
+     * - The number must be greater than all numbers to the left (lower indices)
+     * - The number must be less than all numbers to the right (higher indices)
+     * Returns true if the placement is valid, false otherwise.
      */
     private boolean canPlaceNumber(final int index,
                                    final int number)
@@ -315,7 +343,8 @@ public final class NumberGame extends AbstractGame
     }
 
     /*
-     * Validates that the index is within the game board.
+     * Ensures the index is a valid position in the internal 1D game board array.
+     * Throws IllegalArgumentException if the index is out of range.
      */
     private static void validateIndex(final int index)
     {
@@ -327,7 +356,8 @@ public final class NumberGame extends AbstractGame
     }
 
     /*
-     * Validates that the number is within the range for the game.
+     * Ensures the number is within the allowed game bounds (1 to 1000).
+     * Throws IllegalArgumentException if the number is invalid.
      */
     private static void validateNumber(final int number)
     {
@@ -338,11 +368,10 @@ public final class NumberGame extends AbstractGame
         }
     }
 
-    /**
-     * Checks if the current number (returned by getCurrentNumber()) can be legally
-     * placed in ANY remaining empty spot on the board.
-     *
-     * @return true if there is at least one valid spot, false otherwise.
+    /*
+     * Checks whether the current number can legally be placed in any
+     * empty spot on the board. Used to determine if the game should continue.
+     * Returns true if at least one valid placement exists, false otherwise.
      */
     private boolean canPlaceCurrentNumberAnywhere()
     {
@@ -366,10 +395,12 @@ public final class NumberGame extends AbstractGame
         return false;
     }
 
-    /**
-     * Ends the current game round, updates score, disables buttons, and prompts for replay.
-     *
-     * @param won true if the player won, false otherwise.
+    /*
+     * Finalizes the game based on whether the player won or lost.
+     * - Updates the score and game state
+     * - Disables the grid buttons
+     * - Displays an alert dialog asking if the player wants to play again
+     * If the player chooses not to replay, the game window is closed.
      */
     private void endGame(final boolean won)
     {
@@ -430,8 +461,9 @@ public final class NumberGame extends AbstractGame
         }
     }
 
-    /**
-     * Disables all grid buttons.
+    /*
+     * Disables all buttons on the game board to prevent further interaction
+     * once the game ends.
      */
     private void disableAllButtons()
     {
@@ -447,13 +479,11 @@ public final class NumberGame extends AbstractGame
         }
     }
 
-    /**
-     * Safely closes the games Stage.
+    /*
+     * Safely closes the JavaFX window for the NumberGame.
      */
     private void closeGameWindow()
     {
-        System.out.println("Closing the Number Game window.");
-
         Objects.requireNonNull(gameStage,
                                "Stage cannot be null");
         gameStage.close();

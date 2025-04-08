@@ -1,7 +1,7 @@
 package ca.bcit.comp2522.termproject.twistedwordle;
 
 /**
- * A factory to construct a Player.
+ * A factory to construct a Player object.
  *
  * @author colecampbell
  * @version 1.0

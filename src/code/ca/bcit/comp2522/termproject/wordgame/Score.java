@@ -22,6 +22,9 @@ public class Score
     private static final int               DATA_HALF                = 1;
     private static final int               NOTHING                  = 0;
 
+    /*
+     * Initializes the DateTimeFormatter for consistent date formatting.
+     */
     static
     {
         formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -111,7 +114,7 @@ public class Score
     /**
      * Overrides the toString method.
      *
-     * @return all the instance variables
+     * @return a formatted string with score details
      */
     @Override
     public String toString()

@@ -35,7 +35,9 @@ public final class Country
         this.facts           = facts;
     }
 
-    /* Validates the country name for null or blank. */
+    /*
+     * Validates the country name for null or blank.
+     */
     private void validateName(final String name)
     {
         if (name == null ||
@@ -45,7 +47,9 @@ public final class Country
         }
     }
 
-    /* Validates the capital city name for null or blank. */
+    /*
+     * Validates the capital city name for null or blank.
+     */
     private void validateCapitalCityName(final String capitalCityName)
     {
         if (capitalCityName == null ||
@@ -55,7 +59,9 @@ public final class Country
         }
     }
 
-    /* Validates the facts array for empty. */
+    /*
+     * Validates the facts array for empty.
+     */
     private void validateFacts(final String[] facts)
     {
         if (facts.length == NOTHING)
@@ -66,6 +72,7 @@ public final class Country
 
     /**
      * Accessor for the country name.
+     *
      * @return the country name
      */
     public String getName()
@@ -75,6 +82,7 @@ public final class Country
 
     /**
      * Accessor for the countries capital.
+     *
      * @return the capital city name
      */
     public String getCapitalCityName()
@@ -84,11 +92,27 @@ public final class Country
 
     /**
      * Accessor for one random fact.
+     *
      * @param index the random index for the fact
      * @return the fact
      */
     public String getFacts(final int index)
     {
+        validateIndex(index);
+
         return facts[index];
+    }
+
+    /*
+     * Validates that the index is within range.
+     */
+    private void validateIndex(final int index)
+    {
+        if (index < 0 ||
+            index >= facts.length)
+        {
+            throw new IndexOutOfBoundsException("Invalid fact index: " +
+                                                index);
+        }
     }
 }

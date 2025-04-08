@@ -5,7 +5,19 @@ import javafx.scene.control.Alert;
 import java.util.Arrays;
 
 /**
- * Abstract class for a board game.
+ * An abstract base class representing a generalized number-based board game.
+ *
+ * This class provides shared functionality for games that involve placing numbers into a fixed-size board.
+ * It manages core game state including:
+ * - The board layout (represented by an integer array)
+ * - The currently selected number
+ * - Gameplay statistics such as total games played, games won, and total placements
+ *
+ * It includes utility methods for resetting the game board, updating score statistics,
+ * and maintaining game state across multiple rounds.
+ * Subclasses are expected to implement their specific gameplay mechanics while leveraging this base structure.
+ *
+ * Designed for use with a JavaFX user interface.
  *
  * @author colecampbell
  * @version 1.0
@@ -23,18 +35,26 @@ public abstract class AbstractGame implements GameInterface
     private       int   totalPlacements; // successful placements in the current game
 
     /**
-     * Constructs an abstract game object.
+     * Constructs an abstract game object, initializing the core game state.
+     * - Initializes the numbers array
+     * - Resets the game board using the helper method
+     * - Resets the games played and games won stats
      */
     public AbstractGame()
     {
-        numbers = new int[MAX_PLACEMENTS]; // Create the array
-        resetGame(); // Initialize the game state (fills array, sets currentNumber)
+        numbers = new int[MAX_PLACEMENTS];
+        resetGame();
         gamesPlayed = NOTHING;
         gamesWon    = NOTHING;
     }
 
     /**
-     * Resets the game board state.
+     * Resets the internal state of the game board to its initial configuration.
+     * Specifically:
+     * - Fills the entire numbers array with the EMPTY_SPOT value, effectively clearing all placements.
+     * - Resets currentNumber to EMPTY_SPOT to indicate that no number is selected for placement.
+     *
+     * Note: This method does not reset game statistics such as gamesPlayed, gamesWon, or totalPlacements.
      */
     @Override
     public void resetGame()
@@ -44,7 +64,16 @@ public abstract class AbstractGame implements GameInterface
     }
 
     /**
-     * Updates and displays the user's score/stats.
+     * Calculates and displays the user's current game statistics using a pop-up alert.
+     * Statistics shown include:
+     * - Total number of games played
+     * - Total number of games won
+     * - Number of placements in the last game
+     * - Average number of placements across all games played
+     *
+     * The average is calculated as totalPlacements divided by gamesPlayed.
+     * If no games have been played, the average is shown as 0.
+     * The statistics are formatted into a string and passed to the UI via an alert dialog.
      */
     @Override
     public void updateScore()
@@ -76,7 +105,9 @@ public abstract class AbstractGame implements GameInterface
         showScoreDialog(scoreMessage);
     }
 
-    /* Displays the score for the user. */
+    /*
+     * Displays the score for the user.
+     */
     private void showScoreDialog(final String message)
     {
         final Alert alert;
@@ -88,66 +119,58 @@ public abstract class AbstractGame implements GameInterface
         alert.showAndWait(); // Blocks until user clicks OK
     }
 
-    /**
+    /*
      * Sets the total number of placements.
-     *
-     * @param totalPlacements the total placements to set
      */
-    protected void setTotalPlacements(final int totalPlacements)
+    void setTotalPlacements(final int totalPlacements)
     {
         this.totalPlacements = totalPlacements;
     }
 
-    /**
+    /*
      * Sets the current number.
-     *
-     * @param currentNumber the current number to set
      */
-    protected void setCurrentNumber(final int currentNumber)
+    void setCurrentNumber(final int currentNumber)
     {
         this.currentNumber = currentNumber;
     }
 
-    /**
+    /*
      * Gets the current number.
-     *
-     * @return the current number
      */
-    protected int getCurrentNumber()
+    int getCurrentNumber()
     {
         return this.currentNumber;
     }
 
-    /**
+    /*
      * Increments the total placements by one.
      */
-    protected void incrementTotalPlacements()
+    void incrementTotalPlacements()
     {
         totalPlacements++;
     }
 
-    /**
+    /*
      * Gets the total number of placements.
-     *
-     * @return the total placements
      */
-    protected int getTotalPlacements()
+    int getTotalPlacements()
     {
         return totalPlacements;
     }
 
-    /**
+    /*
      * Increments the number of games played by one.
      */
-    protected void incrementGamesPlayed()
+    void incrementGamesPlayed()
     {
         gamesPlayed++;
     }
 
-    /**
+    /*
      * Increments the number of games won by one.
      */
-    protected void incrementGamesWon()
+    void incrementGamesWon()
     {
         gamesWon++;
     }

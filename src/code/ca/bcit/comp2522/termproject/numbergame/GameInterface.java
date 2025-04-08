@@ -8,12 +8,18 @@ package ca.bcit.comp2522.termproject.numbergame;
  */
 public interface GameInterface
 {
-    /* Starts the game */
+    /**
+     *  Initializes and starts the game logic
+     */
     void startGame();
 
-    /* Resets the game */
+    /**
+     * Resets the game state to its initial conditions.
+     */
     void resetGame();
 
-    /* Updates the score */
+    /**
+     * Updates the player's score based on game events.
+     */
     void updateScore();
 }

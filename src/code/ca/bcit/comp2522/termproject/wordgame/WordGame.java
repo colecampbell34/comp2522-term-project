@@ -44,9 +44,17 @@ public final class WordGame
     private static int incorrectAttempts;
 
     /**
-     * Initializes variables for a new round and commences play.
+     * Serves as the public entry point to start a session of the Word Game.
+     * This method resets the game statistics counters, loads the necessary country
+     * and capital data, starts the interactive gameplay loop, and prints a message
+     * upon completion.
+     * It performs the following steps:
+     * 1. Resets the static game statistics counters to NOTHING (0).
+     * 2. Loads the necessary country and capital data from resource files.
+     * 3. Starts the interactive gameplay loop.
+     * 4. Prints a message indicating the game is finished when the user chooses not to play again.
      *
-     * @throws IOException if a I/O error occurs
+     * @throws IOException if an I/O error occurs during the data loading phase or during score file operations.
      */
     public static void play() throws IOException
     {
@@ -62,7 +70,14 @@ public final class WordGame
     }
 
     /*
-     * Reads from the country files to populate the World HashMap.
+     * Loads country data from text files and populates the World map with Country objects.
+     * It iterates over the alphabet from 'a' to 'z', skipping 'w', and attempts to read files named accordingly.
+     * For each valid file, it:
+     * 1. Skips the first line.
+     * 2. Reads a country and its capital (separated by a colon).
+     * 3. Reads 3 associated facts.
+     * 4. Creates a Country object and stores it in the worldMap.
+     * If a file does not exist, logs an error message but continues processing.
      */
     private static void loadWorldData()
     {
@@ -107,11 +122,6 @@ public final class WordGame
             {
                 System.err.println("Error opening file: " +
                                    fileName);
-            } catch (final Exception e)
-            {
-                System.err.println("Error processing file: " +
-                                   fileName + " - " +
-                                   e.getMessage());
             }
 
             fileName++;
@@ -120,6 +130,9 @@ public final class WordGame
 
     /*
      * Plays one round of the game, posing the user with ten random questions.
+     * It randomly selects a question type (capital, country, or fact) for each of the
+     * ten iterations, and keeps track of the number of guesses made by the user.
+     * After all questions are asked, it prompts the user to play again or return to the main menu.
      */
     private static void playRound() throws IOException
     {
@@ -205,6 +218,8 @@ public final class WordGame
 
     /*
      * Gives the user a random capital city for them to guess the country.
+     * It prompts the user for their guess and checks it against the correct answer.
+     * The user has a maximum of MAX_GUESSES (2) guesses to answer correctly.
      */
     private static int giveCapital(final String key)
     {
@@ -242,6 +257,8 @@ public final class WordGame
 
     /*
      * Gives the user a random country for them to guess the capital city.
+     * It prompts the user for their guess and checks it against the correct answer.
+     * The user has a maximum of MAX_GUESSES (2) guesses to answer correctly.
      */
     private static int giveCountry(final String key)
     {
@@ -279,6 +296,8 @@ public final class WordGame
 
     /*
      * Gives the user a random fact for them to guess the country.
+     * It prompts the user for their guess and checks it against the correct answer.
+     * The user has a maximum of MAX_GUESSES (2) guesses to answer correctly.
      */
     private static int giveFact(final String key)
     {
@@ -320,6 +339,7 @@ public final class WordGame
 
     /*
      * Calls the toString method from the Score class to display the report of the round.
+     * It formats and prints the score details to the console.
      */
     private static void printReport(final Score score)
     {
@@ -329,8 +349,9 @@ public final class WordGame
     }
 
     /*
-     * Checks if the user has a new high score,
-     * and prints the last high score if they do.
+     * Checks if the user has a new high score, and prints the last high score if they do.
+     * It reads existing scores from the score file, compares them to the latest score,
+     * and provides feedback to the user about their performance.
      */
     private static void checkForHighScore(final Score latestScore)
     throws IOException
@@ -371,6 +392,7 @@ public final class WordGame
 
     /*
      * Validates a key for the world map.
+     * It checks if the key is null or blank and throws an exception if it is invalid.
      */
     private static void validateKey(final String key)
     {

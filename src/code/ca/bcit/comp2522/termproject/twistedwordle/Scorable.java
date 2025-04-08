@@ -8,6 +8,8 @@ package ca.bcit.comp2522.termproject.twistedwordle;
  */
 public interface Scorable
 {
-    /* Calculates the score */
+    /*
+     * Calculates the score
+     */
     int calculateScore(int attemptsLeft, int timeLeft);
 }
