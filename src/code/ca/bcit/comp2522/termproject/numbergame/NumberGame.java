@@ -16,7 +16,7 @@ import java.util.Optional;
 import java.util.Random;
 
 /**
- * A JavaFX-based mini-game where the player places 20 randomly generated numbers
+ * A JavaFX-based game where the player places 20 randomly generated numbers
  * onto a 5x4 grid. The numbers must be placed in strictly ascending order from left
  * to right, top to bottom. The game ends in a win if all numbers are placed legally,
  * or in a loss if an illegal placement is made or no valid placements remain.

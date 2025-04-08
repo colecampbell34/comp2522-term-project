@@ -1,7 +1,8 @@
 package ca.bcit.comp2522.termproject.twistedwordle;
 
 /**
- * An interface for games that are scorable.
+ * An interface for games that are Scorable.
+ * Has one method, which calculates the score.
  *
  * @author colecampbell
  * @version 1.0

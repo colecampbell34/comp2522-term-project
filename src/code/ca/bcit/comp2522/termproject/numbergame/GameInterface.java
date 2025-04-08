@@ -1,7 +1,11 @@
 package ca.bcit.comp2522.termproject.numbergame;
 
 /**
- * A game interface for the number game.
+ * An interface for a game.
+ * Includes methods for
+ * starting a game,
+ * resetting a game,
+ * and updating a score.
  *
  * @author colecampbell
  * @version 1.0

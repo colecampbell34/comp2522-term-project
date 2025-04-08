@@ -9,6 +9,7 @@ import java.util.Objects;
 /**
  * Provides a static method to launch the Number Game UI on the JavaFX Application Thread.
  * Manages the lifecycle of the game's Stage.
+ * This class is used before the NumberGame class to set up everything.
  *
  * @author colecampbell
  * @version 1.0

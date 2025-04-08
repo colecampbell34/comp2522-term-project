@@ -1,7 +1,7 @@
 package ca.bcit.comp2522.termproject.twistedwordle;
 
 /**
- * Represents a player in the game. A player has a name and a score. The score starts at 0
+ * Represents a player in the game. A player has a name and a score. The score starts at NOTHING (0)
  * and can be incremented as the player progresses through the game.
  *
  * This class provides the following functionality:
