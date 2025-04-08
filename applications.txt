@@ -3,7 +3,7 @@ lesson 2: unchecked exceptions used for validations,
           checked exceptions used when loading words from file
 lesson 3: overriding used with calculateScore method,
           final objects used everywhere
-lesson 4: twisted world implements the Scorable interface
+lesson 4: twisted wordle implements the Scorable interface
 lesson 5: collections with List<String>
 lesson 6: anonymous inner class in startTimer, generics like List<String> used heavily
 lesson 7: streams/lambda used when loading words from file
