@@ -2,6 +2,7 @@ package ca.bcit.comp2522.termproject;
 
 import ca.bcit.comp2522.termproject.numbergame.NumberGameMain;
 import ca.bcit.comp2522.termproject.twistedwordle.TwistedWordle;
+import ca.bcit.comp2522.termproject.twistedwordle.GameSetup;
 import ca.bcit.comp2522.termproject.wordgame.WordGame;
 import javafx.application.Platform;
 
@@ -15,12 +16,12 @@ import java.util.concurrent.CountDownLatch;
  * Also handles JavaFX platform initialization to support UI elements used by the games.
  * This class ensures that the platform remains active throughout the program's lifecycle,
  * allowing users to launch different JavaFX-based games one after another without crashing.
- *
+ * <p>
  * Games available:
  * - Word Game
  * - Number Game (JavaFX-based)
  * - Twisted Wordle (JavaFX-based with console-based setup)
- *
+ * <p>
  * The class handles graceful shutdown and resource cleanup.
  *
  * @author colecampbell
@@ -205,33 +206,28 @@ public final class Main
         }
     }
 
-    /*
-     * Launches the Twisted Wordle game after setting it up through console inputs.
-     * If setup is successful, starts the JavaFX game and waits until the user closes the window.
-     * Logs an error message if the game setup fails or if an exception occurs during launch.
+    /**
+     * Initiates the Twisted Wordle game sequence: performs console setup
+     * and then launches the JavaFX GUI, waiting for it to close.
      */
     private static void playTwistedWordleGame()
     {
-        System.out.println("\nLaunching Twisted Wordle Game...");
+        System.out.println("\nStarting Twisted Wordle Setup...");
 
         boolean setupSuccessful;
-        setupSuccessful = TwistedWordle.setupGameFromConsole();
+        setupSuccessful = GameSetup.setupGameFromConsole();
 
         if (setupSuccessful)
         {
-            // pause the main thread until the wordle game is done
             final CountDownLatch gameCloseLatch;
             gameCloseLatch = new CountDownLatch(1);
 
             try
             {
+                // Pass the latch's countDown method as the callback to run when the window closes.
                 TwistedWordle.launchGame(gameCloseLatch::countDown);
+                gameCloseLatch.await(); // Pause this thread
 
-                gameCloseLatch.await();
-
-            } catch (final InterruptedException e)
-            {
-                Thread.currentThread().interrupt();
             } catch (final Exception e)
             {
                 e.printStackTrace();
@@ -239,7 +235,7 @@ public final class Main
         }
         else
         {
-            System.err.println("Failed to set up Twisted Wordle from the console.");
+            System.err.println("Failed to set up Twisted Wordle from the console. Game will not launch.");
         }
     }
 }

@@ -71,7 +71,7 @@ public final class TwistedWordleTest
 
         Files.write(TEST_FILE_PATH, wordsToWrite);
 
-        final Set<String> loadedWords = TwistedWordle.loadAndProcessWords(TEST_FILE_PATH.toString());
+        final Set<String> loadedWords = WordLoader.loadAndProcessWords(TEST_FILE_PATH.toString());
 
         assertNotNull(loadedWords, "Loaded words should not be null");
 
@@ -90,11 +90,11 @@ public final class TwistedWordleTest
     void testLoadAndProcessWordsFileNonExist()
     {
         assertThrows(IllegalArgumentException.class,
-                     () -> TwistedWordle.loadAndProcessWords(null));
+                     () -> WordLoader.loadAndProcessWords(null));
         assertThrows(IllegalArgumentException.class,
-                     () -> TwistedWordle.loadAndProcessWords("   "));
+                     () -> WordLoader.loadAndProcessWords("   "));
         assertThrows(IllegalArgumentException.class,
-                     () -> TwistedWordle.loadAndProcessWords("non_existent_file.txt"));
+                     () -> WordLoader.loadAndProcessWords("non_existent_file.txt"));
     }
 
     @AfterEach
